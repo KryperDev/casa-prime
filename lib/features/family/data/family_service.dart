@@ -1,6 +1,7 @@
 ﻿import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../auth/data/auth_service.dart';
+import '../../notifications/data/notification_service.dart';
 import '../../transactions/data/default_categories.dart';
 import '../domain/family_model.dart';
 import '../domain/invite_model.dart';
@@ -8,15 +9,15 @@ import '../domain/invite_model.dart';
 class FamilyService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final AuthService _auth = AuthService();
+  final NotificationService _notif = NotificationService();
 
   // ============================================================
-  //  CRIAR FAMÍLIA (com seed de categorias padrão)
+  //  CRIAR FAMÍLIA
   // ============================================================
   Future<String> createFamily({required String name}) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('Usuário não autenticado.');
 
-    // 1) Cria a família e vincula o usuário como admin (transação atômica)
     final familyId = await _db.runTransaction<String>((tx) async {
       final userRef = _db.collection('users').doc(user.uid);
       final userSnap = await tx.get(userRef);
@@ -43,14 +44,12 @@ class FamilyService {
       return familyRef.id;
     });
 
-    // 2) Cria as categorias padrão (fora da transação, em batch)
     await seedDefaultCategories(familyId);
-
     return familyId;
   }
 
   // ============================================================
-  //  OBSERVAR FAMÍLIA DO USUÁRIO ATUAL (stream)
+  //  OBSERVAR FAMÍLIA
   // ============================================================
   Stream<FamilyModel?> watchMyFamily() async* {
     final user = _auth.currentUser;
@@ -58,7 +57,6 @@ class FamilyService {
       yield null;
       return;
     }
-
     await for (final userSnap
         in _db.collection('users').doc(user.uid).snapshots()) {
       final familyId = userSnap.data()?['familyId'] as String?;
@@ -73,25 +71,17 @@ class FamilyService {
     }
   }
 
-  // ============================================================
-  //  BUSCAR FAMÍLIA (uma vez)
-  // ============================================================
   Future<FamilyModel?> fetchMyFamily() async {
     final user = _auth.currentUser;
     if (user == null) return null;
-
     final userDoc = await _db.collection('users').doc(user.uid).get();
     final familyId = userDoc.data()?['familyId'] as String?;
     if (familyId == null) return null;
-
     final familyDoc = await _db.collection('families').doc(familyId).get();
     if (!familyDoc.exists) return null;
     return FamilyModel.fromMap(familyDoc.data()!);
   }
 
-  // ============================================================
-  //  LISTAR MEMBROS (em blocos de 10 por causa do whereIn)
-  // ============================================================
   Future<List<Map<String, dynamic>>> fetchMembers(
       List<String> memberIds) async {
     if (memberIds.isEmpty) return [];
@@ -154,7 +144,6 @@ class FamilyService {
         .collection('invites')
         .doc(invite.id)
         .update({'revoked': true});
-
     await _db.collection('invite_tokens').doc(invite.token).update({
       'active': false,
     });
@@ -172,6 +161,9 @@ class FamilyService {
             .toList());
   }
 
+  // ============================================================
+  //  ENTRAR COM CONVITE  ← dispara notificação ao admin
+  // ============================================================
   Future<String> joinWithToken(String token) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('Usuário não autenticado.');
@@ -216,11 +208,30 @@ class FamilyService {
 
     await tokenRef.update({'active': false});
 
+    // Notifica o admin
+    try {
+      final adminId = await _notif.familyAdminId(familyId);
+      final myData = await _auth.fetchCurrentUser();
+      final myName = myData?.displayName ?? 'Um novo membro';
+      if (adminId != null) {
+        await _notif.notifyUsers(
+          userIds: [adminId],
+          type: 'invite_accepted',
+          title: 'Convite aceito',
+          body: '$myName entrou na sua família.',
+          data: {'familyId': familyId, 'userId': user.uid},
+          excludeUserId: user.uid,
+        );
+      }
+    } catch (_) {
+      // não bloqueia o fluxo principal
+    }
+
     return familyId;
   }
 
   // ============================================================
-  //  ADMIN: ALTERAR PARENTESCO, REMOVER MEMBRO, RENOMEAR FAMÍLIA
+  //  ADMIN: parentesco, remoção, renomear
   // ============================================================
   Future<void> updateMemberRelationship({
     required String memberId,
@@ -254,9 +265,6 @@ class FamilyService {
     });
   }
 
-  // ============================================================
-  //  HELPER: gerar token alfanumérico (sem caracteres confusos)
-  // ============================================================
   String _generateToken(int length) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rnd = Random.secure();

@@ -3,6 +3,7 @@ import '../../../auth/data/auth_service.dart';
 import '../../../auth/domain/user_model.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
+import '../../../notifications/presentation/screens/notification_settings_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_email_screen.dart';
 import 'change_password_screen.dart';
@@ -67,7 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ---------- Cabeçalho com foto ----------
           Center(
             child: Column(
               children: [
@@ -76,10 +76,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     CircleAvatar(
                       radius: 48,
                       backgroundColor: const Color(0xFF1E88E5),
-                      backgroundImage: user.photoUrl != null
+                      backgroundImage: user.photoUrl != null &&
+                              user.photoUrl!.isNotEmpty
                           ? NetworkImage(user.photoUrl!)
                           : null,
-                      child: user.photoUrl == null
+                      child: (user.photoUrl == null ||
+                              user.photoUrl!.isEmpty)
                           ? Text(
                               user.displayName.isNotEmpty
                                   ? user.displayName[0].toUpperCase()
@@ -101,8 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    const EditProfileScreen(initialTab: 0),
+                                builder: (_) => const EditProfileScreen(),
                               ),
                             );
                             _load();
@@ -129,7 +130,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ---------- Botões de edição ----------
           Card(
             child: Column(
               children: [
@@ -141,8 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            const EditProfileScreen(initialTab: 0),
+                        builder: (_) => const EditProfileScreen(),
                       ),
                     );
                     _load();
@@ -175,12 +174,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const Divider(height: 1),
+                _actionTile(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notificações',
+                  subtitle: 'Escolha o que deseja receber',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const NotificationSettingsScreen(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
-          // ---------- Informações ----------
           Card(
             child: Column(
               children: [
@@ -217,7 +228,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ---------- Zona de perigo ----------
           Card(
             child: ListTile(
               leading: const Icon(Icons.delete_forever, color: Colors.red),
@@ -235,7 +245,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ---------- Sobre ----------
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

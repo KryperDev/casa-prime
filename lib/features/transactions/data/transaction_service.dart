@@ -1,12 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../features/auth/data/auth_service.dart';
+import '../../notifications/data/notification_service.dart';
 import '../domain/transaction_model.dart';
 
 class TransactionService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final AuthService _auth = AuthService();
+  final NotificationService _notif = NotificationService();
 
-  // ---------- Criar ----------
+  // ============================================================
+  //  CRIAR
+  // ============================================================
   Future<String> addTransaction({
     required String familyId,
     required TransactionType type,
@@ -66,10 +70,28 @@ class TransactionService {
       newValue: tx,
     );
 
+    // Notifica outros membros
+    try {
+      final members = await _notif.familyMemberIds(familyId);
+      await _notif.notifyUsers(
+        userIds: members,
+        type: 'transaction_added',
+        title: type == TransactionType.income
+            ? 'Nova entrada'
+            : 'Nova despesa',
+        body: '${user?.displayName ?? 'Alguém'} lançou '
+            '"$description" de R\$ ${amount.toStringAsFixed(2)}.',
+        data: {'familyId': familyId, 'transactionId': ref.id},
+        excludeUserId: uid,
+      );
+    } catch (_) {}
+
     return ref.id;
   }
 
-  // ---------- Atualizar ----------
+  // ============================================================
+  //  ATUALIZAR
+  // ============================================================
   Future<void> updateTransaction({
     required String familyId,
     required TransactionModel old,
@@ -95,9 +117,29 @@ class TransactionService {
       oldValue: before,
       newValue: after,
     );
+
+    // Notifica o autor original (se outro usuário editou) + admin
+    try {
+      final me = _auth.currentUser!.uid;
+      final adminId = await _notif.familyAdminId(familyId);
+      final targets = <String>{old.createdBy};
+      if (adminId != null) targets.add(adminId);
+      targets.remove(me);
+
+      await _notif.notifyUsers(
+        userIds: targets.toList(),
+        type: 'transaction_updated',
+        title: 'Lançamento editado',
+        body: '"${updated.description}" foi alterado.',
+        data: {'familyId': familyId, 'transactionId': updated.id},
+        excludeUserId: me,
+      );
+    } catch (_) {}
   }
 
-  // ---------- Excluir (soft delete) ----------
+  // ============================================================
+  //  EXCLUIR (soft delete)
+  // ============================================================
   Future<void> deleteTransaction({
     required String familyId,
     required TransactionModel tx,
@@ -120,23 +162,44 @@ class TransactionService {
       entityId: tx.id,
       oldValue: tx.toMap(),
     );
+
+    // Notifica o autor original (se outro usuário excluiu)
+    try {
+      final me = _auth.currentUser!.uid;
+      if (tx.createdBy != me) {
+        await _notif.notifyUsers(
+          userIds: [tx.createdBy],
+          type: 'transaction_deleted',
+          title: 'Lançamento excluído',
+          body: '"${tx.description}" foi removido.',
+          data: {'familyId': familyId},
+          excludeUserId: me,
+        );
+      }
+    } catch (_) {}
   }
 
-  // ---------- Stream de transações (ativas) ----------
+  // ============================================================
+  //  STREAM
+  // ============================================================
   Stream<List<TransactionModel>> watchTransactions(String familyId) {
     return _db
         .collection('families')
         .doc(familyId)
         .collection('transactions')
-        .where('status', isEqualTo: 'active')
         .orderBy('date', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => TransactionModel.fromMap(d.data()))
-            .toList());
+        .map((snap) {
+      return snap.docs
+          .map((d) => TransactionModel.fromMap(d.data()))
+          .where((t) => t.status == 'active')
+          .toList();
+    });
   }
 
-  // ---------- Auditoria ----------
+  // ============================================================
+  //  AUDITORIA
+  // ============================================================
   Future<void> _logAction({
     required String familyId,
     required String action,

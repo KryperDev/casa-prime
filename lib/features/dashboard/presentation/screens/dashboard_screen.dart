@@ -4,6 +4,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../../transactions/data/transaction_service.dart';
 import '../../../transactions/domain/transaction_model.dart';
 import '../../../transactions/presentation/screens/transaction_details_screen.dart';
@@ -29,7 +30,12 @@ class DashboardScreen extends StatelessWidget {
         final isAdmin = family.adminId == auth.currentUser?.uid;
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Casa Prime')),
+          appBar: AppBar(
+            title: const Text('Casa Prime'),
+            actions: const [
+              NotificationBell(),
+            ],
+          ),
           body: StreamBuilder<List<TransactionModel>>(
             stream: txService.watchTransactions(family.id),
             builder: (context, snap) {
