@@ -3,6 +3,10 @@ import '../../../auth/data/auth_service.dart';
 import '../../../auth/domain/user_model.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
+import 'edit_profile_screen.dart';
+import 'change_email_screen.dart';
+import 'change_password_screen.dart';
+import 'delete_account_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -56,60 +60,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sair',
-            onPressed: () async {
-              final ok = await showDialog<bool>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text('Sair da conta'),
-                  content: const Text('Tem certeza que deseja sair?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Sair'),
-                    ),
-                  ],
-                ),
-              );
-              if (ok == true) {
-                await _auth.logout();
-                if (mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (r) => false,
-                  );
-                }
-              }
-            },
+            onPressed: () => _confirmLogout(context),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Cabeçalho
+          // ---------- Cabeçalho com foto ----------
           Center(
             child: Column(
               children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor: const Color(0xFF1E88E5),
-                  backgroundImage: user.photoUrl != null
-                      ? NetworkImage(user.photoUrl!)
-                      : null,
-                  child: user.photoUrl == null
-                      ? Text(
-                          user.displayName.isNotEmpty
-                              ? user.displayName[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                              fontSize: 36, color: Colors.white),
-                        )
-                      : null,
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 48,
+                      backgroundColor: const Color(0xFF1E88E5),
+                      backgroundImage: user.photoUrl != null
+                          ? NetworkImage(user.photoUrl!)
+                          : null,
+                      child: user.photoUrl == null
+                          ? Text(
+                              user.displayName.isNotEmpty
+                                  ? user.displayName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                  fontSize: 36, color: Colors.white),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Material(
+                        color: const Color(0xFF1E88E5),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const EditProfileScreen(initialTab: 0),
+                              ),
+                            );
+                            _load();
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Icon(Icons.camera_alt,
+                                color: Colors.white, size: 18),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Text(user.displayName,
@@ -123,37 +129,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Info
+          // ---------- Botões de edição ----------
           Card(
             child: Column(
               children: [
-                _tile(Icons.email_outlined, 'E-mail', user.email),
-                const Divider(height: 1),
-                _tile(
-                  Icons.people_outline,
-                  'Parentesco',
-                  _relationLabel(user),
+                _actionTile(
+                  icon: Icons.person_outline,
+                  title: 'Editar perfil',
+                  subtitle: 'Nome e foto',
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const EditProfileScreen(initialTab: 0),
+                      ),
+                    );
+                    _load();
+                  },
                 ),
                 const Divider(height: 1),
-                _tile(
+                _actionTile(
+                  icon: Icons.email_outlined,
+                  title: 'Alterar e-mail',
+                  subtitle: user.email,
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ChangeEmailScreen(),
+                      ),
+                    );
+                    _load();
+                  },
+                ),
+                const Divider(height: 1),
+                _actionTile(
+                  icon: Icons.lock_outline,
+                  title: 'Alterar senha',
+                  subtitle: 'Toque para trocar',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ---------- Informações ----------
+          Card(
+            child: Column(
+              children: [
+                _infoTile(
+                    Icons.people_outline,
+                    'Parentesco',
+                    _relationLabel(user)),
+                const Divider(height: 1),
+                _infoTile(
                   Icons.shield_outlined,
                   'Tipo de usuário',
                   user.role == 'admin' ? 'Administrador' : 'Membro',
                 ),
                 const Divider(height: 1),
-                _tile(
+                _infoTile(
                   Icons.family_restroom,
                   'Família',
                   _family?.name ?? '—',
                 ),
                 const Divider(height: 1),
-                _tile(
+                _infoTile(
                   Icons.calendar_today_outlined,
                   'Membro desde',
                   _formatDate(user.createdAt),
                 ),
                 const Divider(height: 1),
-                _tile(
+                _infoTile(
                   Icons.check_circle_outline,
                   'Status',
                   user.status == 'active' ? 'Ativo' : 'Suspenso',
@@ -161,9 +215,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Sobre
+          // ---------- Zona de perigo ----------
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              title: const Text('Excluir minha conta',
+                  style: TextStyle(color: Colors.red)),
+              subtitle: const Text(
+                  'Remove seus dados. Lançamentos ficam no histórico.'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const DeleteAccountScreen(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ---------- Sobre ----------
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -184,10 +256,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15)),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Gerenciamento Financeiro Familiar',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
+                  const Text('Gerenciamento Financeiro Familiar',
+                      style:
+                          TextStyle(color: Colors.grey, fontSize: 13)),
                   const SizedBox(height: 12),
                   const Text('Criado por Anderson Scantamburlo',
                       style: TextStyle(
@@ -205,7 +276,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _tile(IconData icon, String label, String value) {
+  Widget _actionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle,
+          style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
+    );
+  }
+
+  Widget _infoTile(IconData icon, String label, String value) {
     return ListTile(
       leading: Icon(icon),
       title: Text(label,
@@ -228,5 +315,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _formatDate(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/'
         '${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sair da conta'),
+        content: const Text('Tem certeza que deseja sair?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _auth.logout();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+      }
+    }
   }
 }
