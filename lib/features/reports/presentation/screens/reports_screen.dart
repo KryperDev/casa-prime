@@ -5,6 +5,7 @@ import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/data/transaction_service.dart';
 import '../../../transactions/domain/transaction_model.dart';
+import 'export_sheet.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -47,6 +48,32 @@ class _ReportsScreenState extends State<ReportsScreen>
         return Scaffold(
           appBar: AppBar(
             title: const Text('Relatórios'),
+            actions: [
+              StreamBuilder<List<TransactionModel>>(
+                stream: txService.watchTransactions(family.id),
+                builder: (context, txSnap) {
+                  final list = txSnap.data ?? [];
+                  return IconButton(
+                    icon: const Icon(Icons.download),
+                    tooltip: 'Exportar (PDF / CSV)',
+                    onPressed: list.isEmpty
+                        ? null
+                        : () => showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(20)),
+                              ),
+                              builder: (_) => ExportSheet(
+                                family: family,
+                                transactions: list,
+                              ),
+                            ),
+                  );
+                },
+              ),
+            ],
             bottom: TabBar(
               controller: _tab,
               tabs: const [
@@ -99,12 +126,11 @@ class _MonthlyReportState extends State<_MonthlyReport> {
   }
 
   Future<void> _pickMonthYear() async {
-    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime(_year, _month, 1),
       firstDate: DateTime(2000),
-      lastDate: DateTime(now.year + 1, 12, 31),
+      lastDate: DateTime(2100),
       helpText: 'Escolha o mês de referência',
       initialDatePickerMode: DatePickerMode.year,
     );
@@ -214,7 +240,8 @@ class _MonthlyReportState extends State<_MonthlyReport> {
               Text(
                 'Comparado ao mês anterior: '
                 '${_deltaLabel(balance, prevBalance)}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style:
+                    const TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],
           ),
