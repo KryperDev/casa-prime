@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
-import '../data/notification_service.dart';
-import '../domain/notification_settings.dart';
+import '../../data/notification_service.dart';
+import '../../domain/notification_settings.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
@@ -83,3 +83,4 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 }
+

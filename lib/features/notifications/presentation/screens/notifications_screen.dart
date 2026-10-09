@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
-import '../data/notification_service.dart';
-import '../domain/notification_model.dart';
+import '../../data/notification_service.dart';
+import '../../domain/notification_model.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -172,3 +172,4 @@ class _NotificationTile extends StatelessWidget {
     );
   }
 }
+

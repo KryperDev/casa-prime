@@ -4,6 +4,7 @@ import '../../../auth/domain/user_model.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../notifications/presentation/screens/notification_settings_screen.dart';
+import '../../../categories/presentation/screens/categories_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_email_screen.dart';
 import 'change_password_screen.dart';
@@ -53,6 +54,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Sessão encerrada.')));
     }
+
+    final isAdmin = user.role == 'admin';
 
     return Scaffold(
       appBar: AppBar(
@@ -187,6 +190,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                if (isAdmin) ...[
+                  const Divider(height: 1),
+                  _actionTile(
+                    icon: Icons.category_outlined,
+                    title: 'Categorias',
+                    subtitle: 'Criar, editar e excluir categorias',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CategoriesScreen(),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
