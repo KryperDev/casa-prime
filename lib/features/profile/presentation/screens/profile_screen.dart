@@ -5,6 +5,7 @@ import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../notifications/presentation/screens/notification_settings_screen.dart';
 import '../../../categories/presentation/screens/categories_screen.dart';
+import '../../../accounts/presentation/screens/accounts_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_email_screen.dart';
 import 'change_password_screen.dart';
@@ -193,6 +194,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (isAdmin) ...[
                   const Divider(height: 1),
                   _actionTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Contas',
+                    subtitle: 'Contas financeiras da família',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AccountsScreen(),
+                      ),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  _actionTile(
                     icon: Icons.category_outlined,
                     title: 'Categorias',
                     subtitle: 'Criar, editar e excluir categorias',
@@ -212,9 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Card(
             child: Column(
               children: [
-                _infoTile(
-                    Icons.people_outline,
-                    'Parentesco',
+                _infoTile(Icons.people_outline, 'Parentesco',
                     _relationLabel(user)),
                 const Divider(height: 1),
                 _infoTile(
@@ -223,23 +234,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   user.role == 'admin' ? 'Administrador' : 'Membro',
                 ),
                 const Divider(height: 1),
-                _infoTile(
-                  Icons.family_restroom,
-                  'Família',
-                  _family?.name ?? '—',
-                ),
+                _infoTile(Icons.family_restroom, 'Família',
+                    _family?.name ?? '—'),
                 const Divider(height: 1),
-                _infoTile(
-                  Icons.calendar_today_outlined,
-                  'Membro desde',
-                  _formatDate(user.createdAt),
-                ),
+                _infoTile(Icons.calendar_today_outlined, 'Membro desde',
+                    _formatDate(user.createdAt)),
                 const Divider(height: 1),
-                _infoTile(
-                  Icons.check_circle_outline,
-                  'Status',
-                  user.status == 'active' ? 'Ativo' : 'Suspenso',
-                ),
+                _infoTile(Icons.check_circle_outline, 'Status',
+                    user.status == 'active' ? 'Ativo' : 'Suspenso'),
               ],
             ),
           ),
@@ -247,7 +249,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           Card(
             child: ListTile(
-              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              leading:
+                  const Icon(Icons.delete_forever, color: Colors.red),
               title: const Text('Excluir minha conta',
                   style: TextStyle(color: Colors.red)),
               subtitle: const Text(
@@ -283,8 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontWeight: FontWeight.bold, fontSize: 15)),
                   const SizedBox(height: 4),
                   const Text('Gerenciamento Financeiro Familiar',
-                      style:
-                          TextStyle(color: Colors.grey, fontSize: 13)),
+                      style: TextStyle(color: Colors.grey, fontSize: 13)),
                   const SizedBox(height: 12),
                   const Text('Criado por Anderson Scantamburlo',
                       style: TextStyle(

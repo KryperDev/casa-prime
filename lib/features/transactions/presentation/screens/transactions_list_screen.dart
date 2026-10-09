@@ -1,14 +1,15 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../data/transaction_service.dart';
+import '../../domain/account_model.dart';
 import '../../domain/category_model.dart';
 import '../../domain/transaction_model.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_details_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ============================================================
 //  Filtros
@@ -16,15 +17,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class TransactionFilters {
   DateTime? startDate;
   DateTime? endDate;
-  String? type;            // 'income' | 'expense' | null (ambos)
+  String? type;
   String? categoryId;
   String? categoryName;
   String? memberId;
   String? memberName;
   String? paymentMethod;
+  String? accountId;
+  String? accountName;
   double? minAmount;
   double? maxAmount;
-  String sortBy = 'date_desc'; // date_desc, date_asc, amount_desc, amount_asc, category
+  String sortBy = 'date_desc';
 
   int get activeCount {
     int c = 0;
@@ -34,12 +37,11 @@ class TransactionFilters {
     if (categoryId != null) c++;
     if (memberId != null) c++;
     if (paymentMethod != null) c++;
+    if (accountId != null) c++;
     if (minAmount != null) c++;
     if (maxAmount != null) c++;
     return c;
   }
-
-  bool get isEmpty => activeCount == 0;
 
   void clear() {
     startDate = null;
@@ -50,6 +52,8 @@ class TransactionFilters {
     memberId = null;
     memberName = null;
     paymentMethod = null;
+    accountId = null;
+    accountName = null;
     minAmount = null;
     maxAmount = null;
     sortBy = 'date_desc';
@@ -62,13 +66,17 @@ class TransactionFilters {
         if (t.date.isBefore(s)) return false;
       }
       if (endDate != null) {
-        final e = DateTime(endDate!.year, endDate!.month, endDate!.day, 23, 59, 59);
+        final e = DateTime(
+            endDate!.year, endDate!.month, endDate!.day, 23, 59, 59);
         if (t.date.isAfter(e)) return false;
       }
       if (type != null && t.type.name != type) return false;
       if (categoryId != null && t.categoryId != categoryId) return false;
       if (memberId != null && t.createdBy != memberId) return false;
-      if (paymentMethod != null && t.paymentMethod != paymentMethod) return false;
+      if (paymentMethod != null && t.paymentMethod != paymentMethod) {
+        return false;
+      }
+      if (accountId != null && t.accountId != accountId) return false;
       if (minAmount != null && t.amount < minAmount!) return false;
       if (maxAmount != null && t.amount > maxAmount!) return false;
       return true;
@@ -87,7 +95,6 @@ class TransactionFilters {
       case 'category':
         list.sort((a, b) => a.categoryName.compareTo(b.categoryName));
         break;
-      case 'date_desc':
       default:
         list.sort((a, b) => b.date.compareTo(a.date));
     }
@@ -95,9 +102,6 @@ class TransactionFilters {
   }
 }
 
-// ============================================================
-//  Tela principal
-// ============================================================
 class TransactionsListScreen extends StatefulWidget {
   const TransactionsListScreen({super.key});
 
@@ -146,14 +150,14 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
           appBar: AppBar(
             title: const Text('Lançamentos'),
             actions: [
-              // Badge com contagem de filtros ativos
               Stack(
                 alignment: Alignment.center,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.filter_list),
                     tooltip: 'Filtros',
-                    onPressed: () => _openFiltersSheet(family.id, family),
+                    onPressed: () =>
+                        _openFiltersSheet(family.id, family),
                   ),
                   if (_filters.activeCount > 0)
                     Positioned(
@@ -166,9 +170,7 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
+                            minWidth: 16, minHeight: 16),
                         child: Text(
                           '${_filters.activeCount}',
                           style: const TextStyle(
@@ -187,9 +189,30 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
           body: Column(
             children: [
               if (_filters.activeCount > 0)
-                _ActiveFiltersBar(
-                  filters: _filters,
-                  onClear: () => setState(() => _filters.clear()),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  color: Colors.blue.withValues(alpha: 0.08),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.filter_alt,
+                          size: 18, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${_filters.activeCount} filtro(s) ativo(s)',
+                          style: const TextStyle(
+                              fontSize: 13, color: Colors.blue),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () =>
+                            setState(() => _filters.clear()),
+                        icon: const Icon(Icons.close, size: 16),
+                        label: const Text('Limpar'),
+                      ),
+                    ],
+                  ),
                 ),
               Expanded(
                 child: StreamBuilder<List<TransactionModel>>(
@@ -200,19 +223,6 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                       return const Center(
                           child: CircularProgressIndicator());
                     }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'Erro ao carregar: ${snapshot.error}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      );
-                    }
-
                     final all = snapshot.data ?? [];
                     final filtered = _filters.apply(all);
 
@@ -231,7 +241,6 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                       );
                     }
 
-                    // Agrupa por dia (só quando ordenado por data)
                     final isDateSort = _filters.sortBy == 'date_desc' ||
                         _filters.sortBy == 'date_asc';
 
@@ -281,13 +290,10 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                         16, 16, 16, 8),
-                                    child: Text(
-                                      day,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
+                                    child: Text(day,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey)),
                                   ),
                                   ...items.map((t) => _TransactionTile(
                                         tx: t,
@@ -324,7 +330,8 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.arrow_downward, color: Colors.green),
+              leading:
+                  const Icon(Icons.arrow_downward, color: Colors.green),
               title: const Text('Nova entrada'),
               onTap: () {
                 Navigator.pop(context);
@@ -363,41 +370,6 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
 }
 
 // ============================================================
-//  Barra de filtros ativos
-// ============================================================
-class _ActiveFiltersBar extends StatelessWidget {
-  final TransactionFilters filters;
-  final VoidCallback onClear;
-
-  const _ActiveFiltersBar({required this.filters, required this.onClear});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: Colors.blue.withValues(alpha: 0.08),
-      child: Row(
-        children: [
-          const Icon(Icons.filter_alt, size: 18, color: Colors.blue),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${filters.activeCount} filtro(s) ativo(s)',
-              style: const TextStyle(fontSize: 13, color: Colors.blue),
-            ),
-          ),
-          TextButton.icon(
-            onPressed: onClear,
-            icon: const Icon(Icons.close, size: 16),
-            label: const Text('Limpar'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
 //  Sheet de filtros
 // ============================================================
 class _FiltersSheet extends StatefulWidget {
@@ -423,19 +395,13 @@ class _FiltersSheetState extends State<_FiltersSheet> {
   final _maxCtrl = TextEditingController();
 
   static const _paymentMethods = [
-    'Dinheiro',
-    'PIX',
-    'Débito',
-    'Crédito',
-    'Boleto',
-    'Transferência',
-    'Outros',
+    'Dinheiro', 'PIX', 'Débito', 'Crédito', 'Boleto',
+    'Transferência', 'Outros',
   ];
 
   @override
   void initState() {
     super.initState();
-    // Cópia para não aplicar imediatamente
     _local = TransactionFilters()
       ..startDate = widget.filters.startDate
       ..endDate = widget.filters.endDate
@@ -445,6 +411,8 @@ class _FiltersSheetState extends State<_FiltersSheet> {
       ..memberId = widget.filters.memberId
       ..memberName = widget.filters.memberName
       ..paymentMethod = widget.filters.paymentMethod
+      ..accountId = widget.filters.accountId
+      ..accountName = widget.filters.accountName
       ..minAmount = widget.filters.minAmount
       ..maxAmount = widget.filters.maxAmount
       ..sortBy = widget.filters.sortBy;
@@ -478,8 +446,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
     }
   }
 
-  Future<void> _apply() async {
-    // Copia os valores locais para o objeto real
+  void _apply() {
     final f = widget.filters;
     f.startDate = _local.startDate;
     f.endDate = _local.endDate;
@@ -489,12 +456,13 @@ class _FiltersSheetState extends State<_FiltersSheet> {
     f.memberId = _local.memberId;
     f.memberName = _local.memberName;
     f.paymentMethod = _local.paymentMethod;
+    f.accountId = _local.accountId;
+    f.accountName = _local.accountName;
     f.minAmount = _local.minAmount;
     f.maxAmount = _local.maxAmount;
     f.sortBy = _local.sortBy;
-
     widget.onApply();
-    if (mounted) Navigator.pop(context);
+    Navigator.pop(context);
   }
 
   @override
@@ -509,7 +477,6 @@ class _FiltersSheetState extends State<_FiltersSheet> {
         expand: false,
         builder: (_, scrollController) => Column(
           children: [
-            // Handle
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               width: 40,
@@ -539,14 +506,11 @@ class _FiltersSheetState extends State<_FiltersSheet> {
               ),
             ),
             const Divider(height: 1),
-
-            // Corpo rolável
             Expanded(
               child: ListView(
                 controller: scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // ------- Tipo -------
                   const _Label('Tipo'),
                   Wrap(
                     spacing: 8,
@@ -572,14 +536,13 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ------- Período -------
                   const _Label('Período'),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: const Icon(Icons.calendar_today, size: 16),
+                          icon:
+                              const Icon(Icons.calendar_today, size: 16),
                           label: Text(_local.startDate == null
                               ? 'De'
                               : Formatters.date(_local.startDate!)),
@@ -596,20 +559,9 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                           onPressed: () => _pickDate(isStart: false),
                         ),
                       ),
-                      if (_local.startDate != null ||
-                          _local.endDate != null)
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => setState(() {
-                            _local.startDate = null;
-                            _local.endDate = null;
-                          }),
-                        ),
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ------- Categoria -------
                   const _Label('Categoria'),
                   _CategoryDropdown(
                     familyId: widget.familyId,
@@ -620,11 +572,20 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                     }),
                   ),
                   const SizedBox(height: 20),
-
-                  // ------- Membro -------
+                  const _Label('Conta'),
+                  _AccountDropdown(
+                    familyId: widget.familyId,
+                    selectedId: _local.accountId,
+                    onChanged: (id, name) => setState(() {
+                      _local.accountId = id;
+                      _local.accountName = name;
+                    }),
+                  ),
+                  const SizedBox(height: 20),
                   const _Label('Membro'),
                   _MemberDropdown(
                     memberIds: widget.family.memberIds,
+                    familyId: widget.familyId,
                     selectedId: _local.memberId,
                     onChanged: (id, name) => setState(() {
                       _local.memberId = id;
@@ -632,15 +593,11 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                     }),
                   ),
                   const SizedBox(height: 20),
-
-                  // ------- Forma de pagamento -------
                   const _Label('Forma de pagamento'),
                   DropdownButtonFormField<String>(
                     value: _local.paymentMethod,
                     decoration: const InputDecoration(
-                      hintText: 'Qualquer',
-                      isDense: true,
-                    ),
+                        hintText: 'Qualquer', isDense: true),
                     items: _paymentMethods
                         .map((m) => DropdownMenuItem(
                               value: m,
@@ -651,8 +608,6 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                         setState(() => _local.paymentMethod = v),
                   ),
                   const SizedBox(height: 20),
-
-                  // ------- Valor -------
                   const _Label('Valor (R\$)'),
                   Row(
                     children: [
@@ -663,11 +618,9 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                               const TextInputType.numberWithOptions(
                                   decimal: true),
                           decoration: const InputDecoration(
-                            labelText: 'Mínimo',
-                            isDense: true,
-                          ),
-                          onChanged: (v) => _local.minAmount = double.tryParse(
-                              v.replaceAll(',', '.')),
+                              labelText: 'Mínimo', isDense: true),
+                          onChanged: (v) => _local.minAmount =
+                              double.tryParse(v.replaceAll(',', '.')),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -678,18 +631,14 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                               const TextInputType.numberWithOptions(
                                   decimal: true),
                           decoration: const InputDecoration(
-                            labelText: 'Máximo',
-                            isDense: true,
-                          ),
-                          onChanged: (v) => _local.maxAmount = double.tryParse(
-                              v.replaceAll(',', '.')),
+                              labelText: 'Máximo', isDense: true),
+                          onChanged: (v) => _local.maxAmount =
+                              double.tryParse(v.replaceAll(',', '.')),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ------- Ordenar -------
                   const _Label('Ordenar por'),
                   DropdownButtonFormField<String>(
                     value: _local.sortBy,
@@ -718,8 +667,6 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                 ],
               ),
             ),
-
-            // ------- Aplicar -------
             SafeArea(
               top: false,
               child: Padding(
@@ -742,8 +689,25 @@ class _FiltersSheetState extends State<_FiltersSheet> {
   }
 }
 
+class _Label extends StatelessWidget {
+  final String text;
+  const _Label(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey)),
+    );
+  }
+}
+
 // ============================================================
-//  Dropdown de categoria (observa Firestore)
+//  Dropdowns
 // ============================================================
 class _CategoryDropdown extends StatelessWidget {
   final String familyId;
@@ -767,26 +731,22 @@ class _CategoryDropdown extends StatelessWidget {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SizedBox(
-            height: 48,
-            child: Center(child: CircularProgressIndicator()),
-          );
+              height: 48,
+              child: Center(child: CircularProgressIndicator()));
         }
         final cats = snapshot.data!.docs
-            .map((d) => CategoryModel.fromMap(d.data() as Map<String, dynamic>))
+            .map((d) =>
+                CategoryModel.fromMap(d.data() as Map<String, dynamic>))
             .toList()
           ..sort((a, b) => a.name.compareTo(b.name));
 
         return DropdownButtonFormField<String?>(
           value: selectedId,
           decoration: const InputDecoration(
-            hintText: 'Qualquer categoria',
-            isDense: true,
-          ),
+              hintText: 'Qualquer categoria', isDense: true),
           items: [
             const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Qualquer categoria'),
-            ),
+                value: null, child: Text('Qualquer categoria')),
             ...cats.map((c) => DropdownMenuItem<String?>(
                   value: c.id,
                   child: Text(c.name),
@@ -805,94 +765,126 @@ class _CategoryDropdown extends StatelessWidget {
   }
 }
 
-// ============================================================
-//  Dropdown de membro (observa usuários da família)
-// ============================================================
-class _MemberDropdown extends StatelessWidget {
-  final List<String> memberIds;
+class _AccountDropdown extends StatelessWidget {
+  final String familyId;
   final String? selectedId;
   final void Function(String? id, String? name) onChanged;
 
-  const _MemberDropdown({
-    required this.memberIds,
+  const _AccountDropdown({
+    required this.familyId,
     required this.selectedId,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final db = FirebaseFirestore.instance;
     return StreamBuilder<QuerySnapshot>(
-      stream: db.collection('users').where('familyId', isEqualTo: _familyId)
+      stream: FirebaseFirestore.instance
+          .collection('families')
+          .doc(familyId)
+          .collection('accounts')
           .snapshots(),
       builder: (context, snapshot) {
-        // fallback: se não dá pra consultar (regras), usa memberIds
-        final docs = snapshot.data?.docs ?? [];
-        final names = <String, String>{};
-        for (final d in docs) {
-          final data = d.data() as Map<String, dynamic>;
-          if (data['familyId'] == _familyId) {
-            names[d.id] = (data['displayName'] ?? 'Usuário') as String;
-          }
+        if (!snapshot.hasData) {
+          return const SizedBox(
+              height: 48,
+              child: Center(child: CircularProgressIndicator()));
         }
+        final accs = snapshot.data!.docs
+            .map((d) =>
+                AccountModel.fromMap(d.data() as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
 
         return DropdownButtonFormField<String?>(
           value: selectedId,
           decoration: const InputDecoration(
-            hintText: 'Qualquer membro',
-            isDense: true,
-          ),
+              hintText: 'Qualquer conta', isDense: true),
           items: [
             const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Qualquer membro'),
-            ),
-            ...names.entries.map((e) => DropdownMenuItem<String?>(
-                  value: e.key,
-                  child: Text(e.value),
+                value: null, child: Text('Qualquer conta')),
+            ...accs.map((a) => DropdownMenuItem<String?>(
+                  value: a.id,
+                  child: Text(a.name),
                 )),
           ],
-          onChanged: (id) => onChanged(id, id == null ? null : names[id]),
+          onChanged: (id) {
+            String? name;
+            if (id != null) {
+              name = accs.firstWhere((a) => a.id == id).name;
+            }
+            onChanged(id, name);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _MemberDropdown extends StatelessWidget {
+  final List<String> memberIds;
+  final String familyId;
+  final String? selectedId;
+  final void Function(String? id, String? name) onChanged;
+
+  const _MemberDropdown({
+    required this.memberIds,
+    required this.familyId,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _fetchMembers(),
+      builder: (context, snapshot) {
+        final docs = snapshot.data ?? [];
+        return DropdownButtonFormField<String?>(
+          value: selectedId,
+          decoration: const InputDecoration(
+              hintText: 'Qualquer membro', isDense: true),
+          items: [
+            const DropdownMenuItem<String?>(
+                value: null, child: Text('Qualquer membro')),
+            ...docs.map((d) => DropdownMenuItem<String?>(
+                  value: d['uid'] as String,
+                  child: Text(d['displayName'] as String? ?? 'Usuário'),
+                )),
+          ],
+          onChanged: (id) {
+            String? name;
+            if (id != null) {
+              name = docs
+                  .firstWhere((d) => d['uid'] == id)['displayName'] as String?;
+            }
+            onChanged(id, name);
+          },
         );
       },
     );
   }
 
-  String get _familyId {
-    // Necessário para o filtro de membros; ajustado pelo widget pai
-    // (ver _FiltersSheet). Aqui usamos um hack: pega do primeiro
-    // memberId via mapa implícito — mas como Firestore não permite
-    // consultar "users where familyId == X" diretamente do lado
-    // cliente sem permissão, deixamos o dropdown vazio se falhar.
-    return _familyIdCache;
-  }
-}
-
-// Cache estático simples para passar o familyId ao _MemberDropdown
-String _familyIdCache = '';
-
-// ============================================================
-//  Label de seção
-// ============================================================
-class _Label extends StatelessWidget {
-  final String text;
-  const _Label(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey)),
-    );
+  Future<List<Map<String, dynamic>>> _fetchMembers() async {
+    final db = FirebaseFirestore.instance;
+    final result = <Map<String, dynamic>>[];
+    for (var i = 0; i < memberIds.length; i += 10) {
+      final chunk = memberIds.sublist(
+          i, i + 10 > memberIds.length ? memberIds.length : i + 10);
+      final snap = await db
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final d in snap.docs) {
+        result.add({'uid': d.id, ...d.data()});
+      }
+    }
+    return result;
   }
 }
 
 // ============================================================
-//  Tile de transação
+//  Tile
 // ============================================================
 class _TransactionTile extends StatelessWidget {
   final TransactionModel tx;
@@ -914,6 +906,12 @@ class _TransactionTile extends StatelessWidget {
     final auth = AuthService();
     final isMine = tx.createdBy == auth.currentUser?.uid;
 
+    final subtitleParts = <String>[
+      tx.categoryName,
+      if (tx.subcategoryName != null) tx.subcategoryName!,
+      if (tx.accountName != null) '🏦 ${tx.accountName}',
+    ];
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
@@ -927,8 +925,7 @@ class _TransactionTile extends StatelessWidget {
         title: Text(tx.description,
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-          '${tx.categoryName}'
-          '${tx.subcategoryName != null ? ' • ${tx.subcategoryName}' : ''}\n'
+          '${subtitleParts.join(' • ')}\n'
           'Adicionado por ${tx.createdByName} às ${Formatters.time(tx.createdAt)}',
           style: const TextStyle(fontSize: 12),
         ),
@@ -940,10 +937,9 @@ class _TransactionTile extends StatelessWidget {
             Text(
               '$sign ${Formatters.money(tx.amount)}',
               style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15),
             ),
             if (isAdmin && !isMine)
               const Text('editar como admin',
