@@ -1,11 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../../auth/domain/user_model.dart';
+import '../../../../app/app.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../notifications/presentation/screens/notification_settings_screen.dart';
 import '../../../categories/presentation/screens/categories_screen.dart';
 import '../../../accounts/presentation/screens/accounts_screen.dart';
+import '../../../settings/presentation/screens/appearance_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_email_screen.dart';
 import 'change_password_screen.dart';
@@ -191,6 +193,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const Divider(height: 1),
+                _actionTile(
+                  icon: Icons.brightness_6_outlined,
+                  title: 'Aparência',
+                  subtitle: 'Claro, escuro ou automático',
+                  onTap: () {
+                    final controller = ThemeControllerProvider.of(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            AppearanceScreen(controller: controller),
+                      ),
+                    );
+                  },
+                ),
                 if (isAdmin) ...[
                   const Divider(height: 1),
                   _actionTile(
@@ -371,3 +389,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 }
+
