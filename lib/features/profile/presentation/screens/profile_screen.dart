@@ -7,6 +7,7 @@ import '../../../family/domain/family_model.dart';
 import '../../../notifications/presentation/screens/notification_settings_screen.dart';
 import '../../../categories/presentation/screens/categories_screen.dart';
 import '../../../accounts/presentation/screens/accounts_screen.dart';
+import '../../../onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../settings/presentation/screens/appearance_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_email_screen.dart';
@@ -389,4 +390,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 }
+
 

@@ -1,5 +1,6 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../transactions/domain/account_model.dart';
+import '../../transactions/domain/transaction_model.dart';
 
 class AccountWithBalance {
   final AccountModel account;
@@ -119,22 +120,23 @@ class AccountService {
 
   // ============================================================
   //  CÁLCULO DE SALDO
-  //  Recebe a lista de transações da família (já vem do stream
-  //  existente na tela) e agrega por accountId.
+  //  Recebe a lista de transações TIPADA como TransactionModel
+  //  (não dynamic), para o enum .name / comparação funcionar.
   // ============================================================
   static List<AccountWithBalance> computeBalances({
     required List<AccountModel> accounts,
-    required List<dynamic> transactions,
+    required List<TransactionModel> transactions,
   }) {
     final incomeMap = <String, double>{};
     final expenseMap = <String, double>{};
 
     for (final t in transactions) {
-      final accountId = t.accountId as String?;
+      final accountId = t.accountId;
       if (accountId == null || accountId.isEmpty) continue;
-      final amount = (t.amount as num).toDouble();
-      final type = t.type.name as String;
-      if (type == 'income') {
+      final amount = t.amount;
+
+      // Compara o enum diretamente, sem usar .name
+      if (t.type == TransactionType.income) {
         incomeMap[accountId] = (incomeMap[accountId] ?? 0) + amount;
       } else {
         expenseMap[accountId] = (expenseMap[accountId] ?? 0) + amount;
