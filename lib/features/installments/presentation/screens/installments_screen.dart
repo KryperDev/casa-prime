@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../data/installment_service.dart';
@@ -18,9 +20,7 @@ class InstallmentsScreen extends StatelessWidget {
       stream: familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
 
@@ -30,36 +30,16 @@ class InstallmentsScreen extends StatelessWidget {
             stream: service.watchInstallments(family.id),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const ListSkeleton();
               }
               final list = snap.data ?? [];
 
               if (list.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.credit_card,
-                            size: 96,
-                            color: Colors.grey.withValues(alpha: 0.5)),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Nenhuma compra parcelada',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Quando você cria uma saída, marque a opção '
-                          '"Compra parcelada" para dividir em N vezes.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, height: 1.5),
-                        ),
-                      ],
-                    ),
-                  ),
+                return const EmptyState(
+                  icon: Icons.credit_card,
+                  title: 'Nenhuma compra parcelada',
+                  subtitle:
+                      'Quando você cria uma saída, marque a opção "Compra parcelada no cartão" para dividir em N vezes.',
                 );
               }
 

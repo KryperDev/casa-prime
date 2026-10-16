@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
@@ -8,14 +10,9 @@ import '../../data/transaction_service.dart';
 import '../../domain/account_model.dart';
 import '../../domain/category_model.dart';
 import '../../domain/transaction_model.dart';
-import '../../../../core/widgets/empty_state.dart';
-import '../../../../core/widgets/loading_skeleton.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_details_screen.dart';
 
-// ============================================================
-//  Filtros
-// ============================================================
 class TransactionFilters {
   DateTime? startDate;
   DateTime? endDate;
@@ -75,9 +72,7 @@ class TransactionFilters {
       if (type != null && t.type.name != type) return false;
       if (categoryId != null && t.categoryId != categoryId) return false;
       if (memberId != null && t.createdBy != memberId) return false;
-      if (paymentMethod != null && t.paymentMethod != paymentMethod) {
-        return false;
-      }
+      if (paymentMethod != null && t.paymentMethod != paymentMethod) return false;
       if (accountId != null && t.accountId != accountId) return false;
       if (minAmount != null && t.amount < minAmount!) return false;
       if (maxAmount != null && t.amount > maxAmount!) return false;
@@ -108,8 +103,7 @@ class TransactionsListScreen extends StatefulWidget {
   const TransactionsListScreen({super.key});
 
   @override
-  State<TransactionsListScreen> createState() =>
-      _TransactionsListScreenState();
+  State<TransactionsListScreen> createState() => _TransactionsListScreenState();
 }
 
 class _TransactionsListScreenState extends State<TransactionsListScreen> {
@@ -141,9 +135,7 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
       stream: _familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
         final isAdmin = family.adminId == auth.currentUser?.uid;
@@ -158,8 +150,7 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                   IconButton(
                     icon: const Icon(Icons.filter_list),
                     tooltip: 'Filtros',
-                    onPressed: () =>
-                        _openFiltersSheet(family.id, family),
+                    onPressed: () => _openFiltersSheet(family.id, family),
                   ),
                   if (_filters.activeCount > 0)
                     Positioned(
@@ -192,8 +183,8 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
             children: [
               if (_filters.activeCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   color: Colors.blue.withValues(alpha: 0.08),
                   child: Row(
                     children: [
@@ -208,8 +199,7 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: () =>
-                            setState(() => _filters.clear()),
+                        onPressed: () => setState(() => _filters.clear()),
                         icon: const Icon(Icons.close, size: 16),
                         label: const Text('Limpar'),
                       ),
@@ -220,26 +210,31 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                 child: StreamBuilder<List<TransactionModel>>(
                   stream: _service.watchTransactions(family.id),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(
-                          child: CircularProgressIndicator());
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const ListSkeleton();
                     }
                     final all = snapshot.data ?? [];
                     final filtered = _filters.apply(all);
 
+                    if (all.isEmpty) {
+                      return EmptyState(
+                        icon: Icons.receipt_long,
+                        title: 'Nenhum lançamento ainda',
+                        subtitle:
+                            'Comece registrando suas entradas e saídas. Toque no botão abaixo para criar o primeiro.',
+                        actionLabel: 'Adicionar lançamento',
+                        onAction: () => _showAddMenu(context, family.id),
+                      );
+                    }
+
                     if (filtered.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            all.isEmpty
-                                ? 'Nenhum lançamento ainda.\nToque no + para adicionar.'
-                                : 'Nenhum lançamento corresponde aos filtros.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ),
+                      return EmptyState(
+                        icon: Icons.filter_alt_off,
+                        title: 'Nada encontrado',
+                        subtitle:
+                            'Nenhum lançamento corresponde aos filtros aplicados. Tente ajustar ou limpar os filtros.',
+                        actionLabel: 'Limpar filtros',
+                        onAction: () => setState(() => _filters.clear()),
                       );
                     }
 
@@ -286,8 +281,7 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
                               final day = days[i];
                               final items = grouped[day]!;
                               return Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
@@ -332,8 +326,7 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading:
-                  const Icon(Icons.arrow_downward, color: Colors.green),
+              leading: const Icon(Icons.arrow_downward, color: Colors.green),
               title: const Text('Nova entrada'),
               onTap: () {
                 Navigator.pop(context);
@@ -371,9 +364,6 @@ class _TransactionsListScreenState extends State<TransactionsListScreen> {
   }
 }
 
-// ============================================================
-//  Sheet de filtros
-// ============================================================
 class _FiltersSheet extends StatefulWidget {
   final TransactionFilters filters;
   final String familyId;
@@ -543,8 +533,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon:
-                              const Icon(Icons.calendar_today, size: 16),
+                          icon: const Icon(Icons.calendar_today, size: 16),
                           label: Text(_local.startDate == null
                               ? 'De'
                               : Formatters.date(_local.startDate!)),
@@ -708,9 +697,6 @@ class _Label extends StatelessWidget {
   }
 }
 
-// ============================================================
-//  Dropdowns
-// ============================================================
 class _CategoryDropdown extends StatelessWidget {
   final String familyId;
   final String? selectedId;
@@ -885,9 +871,6 @@ class _MemberDropdown extends StatelessWidget {
   }
 }
 
-// ============================================================
-//  Tile
-// ============================================================
 class _TransactionTile extends StatelessWidget {
   final TransactionModel tx;
   final String familyId;
@@ -962,4 +945,3 @@ class _TransactionTile extends StatelessWidget {
     );
   }
 }
-

@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../data/recurring_service.dart';
@@ -18,9 +20,7 @@ class RecurringsScreen extends StatelessWidget {
       stream: familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
 
@@ -30,45 +30,21 @@ class RecurringsScreen extends StatelessWidget {
             stream: recurringService.watchRecurrings(family.id),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const ListSkeleton();
               }
               final list = snap.data ?? [];
 
               if (list.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.repeat,
-                            size: 96,
-                            color: Colors.grey.withValues(alpha: 0.5)),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Nenhuma recorrência ainda',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Cadastre lançamentos que se repetem todo mês: '
-                          'salário, aluguel, Netflix, academia...',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, height: 1.5),
-                        ),
-                        const SizedBox(height: 24),
-                        FilledButton.icon(
-                          icon: const Icon(Icons.add),
-                          label: const Text('Criar primeira'),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const EditRecurringScreen(),
-                            ),
-                          ),
-                        ),
-                      ],
+                return EmptyState(
+                  icon: Icons.repeat,
+                  title: 'Nenhuma recorrência ainda',
+                  subtitle:
+                      'Cadastre lançamentos que se repetem todo mês: salário, aluguel, Netflix, academia...',
+                  actionLabel: 'Criar primeira',
+                  onAction: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EditRecurringScreen(),
                     ),
                   ),
                 );
@@ -188,8 +164,7 @@ class _RecurringTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${recurring.categoryName} • ${recurring.frequency.label}',
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 2),
                     Text(

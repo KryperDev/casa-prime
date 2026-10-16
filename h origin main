@@ -1,0 +1,53 @@
+[33mcommit e7ee32020829ecc5702bc80fee8923bce027fa1d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Thu Oct 15 22:24:26 2026 -0300
+
+    Fase 22 - Polimento de UI/UX: menu enxuto, skeleton, empty states, snackbars
+
+[33mcommit dffb9b6cb8e5a415ac84cb3ef7ac54c1ac82ebcb[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Thu Oct 15 22:13:19 2026 -0300
+
+    Fase 25 - Parcelamento de cartao com aba dedicada
+
+[33mcommit 2d305394fe0f18ecea8e63a3330a629bd0c9631b[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Thu Oct 15 21:58:14 2026 -0300
+
+    Fase 24 - Lancamentos recorrentes com processamento automatico
+
+[33mcommit 09db7fbeac70eb30713f5c640b6168a3632e6132[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Thu Oct 15 21:43:36 2026 -0300
+
+    Fase 23.1 - Metas com lancamento automatico e categoria propria
+
+[33mcommit 067100f6bd9c08d3f71408e10be1234d02358fc7[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Sun Oct 11 13:34:45 2026 -0300
+
+    Fase 21 - Tutorial de boas-vindas + correcao do TransactionType
+
+[33mcommit 10e07765f0bd6f87f4bd8346ef7638e5eaf0c4d5[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Sat Oct 10 21:21:28 2026 -0300
+
+    Fase 18 - APK de producao assinado
+
+[33mcommit 2892b340bb9c564a8b3e8e81515ea83b2d120cde[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Sat Oct 10 19:04:00 2026 -0300
+
+    Fase 17 - Modo claro/escuro com sincronizacao
+
+[33mcommit 31ab144803f0cb51df5fde98548a20d562fc9bfe[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Fri Oct 9 20:41:23 2026 -0300
+
+    Fase 16 - Contas financeiras com saldo por conta e filtro
+
+[33mcommit a336613291ee2a644550f615567c45249a5e2471[m
+Author: Anderson Scantamburlo <andersonkryper@gmail.com>
+Date:   Fri Oct 9 20:18:52 2026 -0300
+
+    Fase 15 - Categorias personalizadas com ícones e subcategorias

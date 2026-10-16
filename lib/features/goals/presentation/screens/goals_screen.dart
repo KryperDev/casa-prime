@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../data/goal_service.dart';
@@ -18,9 +20,7 @@ class GoalsScreen extends StatelessWidget {
       stream: familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
 
@@ -30,51 +30,26 @@ class GoalsScreen extends StatelessWidget {
             stream: goalService.watchGoals(family.id),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const ListSkeleton();
               }
               final goals = snap.data ?? [];
 
               if (goals.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.savings_outlined,
-                            size: 96,
-                            color: Colors.grey.withValues(alpha: 0.5)),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Nenhuma meta ainda',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Que tal criar uma meta para juntar dinheiro '
-                          'com a família? Ex: "Viagem de fim de ano"',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, height: 1.5),
-                        ),
-                        const SizedBox(height: 24),
-                        FilledButton.icon(
-                          icon: const Icon(Icons.add),
-                          label: const Text('Criar primeira meta'),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const EditGoalScreen(),
-                            ),
-                          ),
-                        ),
-                      ],
+                return EmptyState(
+                  icon: Icons.savings_outlined,
+                  title: 'Nenhuma meta ainda',
+                  subtitle:
+                      'Que tal criar uma meta para juntar dinheiro com a família? Ex: "Viagem de fim de ano".',
+                  actionLabel: 'Criar primeira meta',
+                  onAction: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EditGoalScreen(),
                     ),
                   ),
                 );
               }
 
-              // Separa ativas e concluídas
               final ativas = goals.where((g) => !g.isCompleted).toList();
               final concluidas = goals.where((g) => g.isCompleted).toList();
 
@@ -133,9 +108,6 @@ class GoalsScreen extends StatelessWidget {
   }
 }
 
-// ============================================================
-//  CARD DE META
-// ============================================================
 class _GoalCard extends StatelessWidget {
   final GoalModel goal;
   final String familyId;
@@ -195,7 +167,6 @@ class _GoalCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabeçalho
               Row(
                 children: [
                   CircleAvatar(
@@ -241,8 +212,6 @@ class _GoalCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Progresso
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
@@ -253,8 +222,6 @@ class _GoalCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Valores
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -269,8 +236,6 @@ class _GoalCard extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // Prazo
               if (goal.deadline != null) ...[
                 const SizedBox(height: 8),
                 Row(
