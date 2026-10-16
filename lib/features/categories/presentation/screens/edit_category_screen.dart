@@ -4,6 +4,8 @@ import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/domain/category_model.dart';
 import '../../data/category_service.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 
 class EditCategoryScreen extends StatefulWidget {
   final CategoryModel? existing;
@@ -101,21 +103,13 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isEditing
-              ? 'Categoria atualizada.'
-              : 'Categoria criada.'),
-        ),
-      );
+      AppSnackBar.sucesso(context, isEditing ? 'Categoria atualizada.' : 'Categoria criada.');
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $msg')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate($msg));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -185,9 +179,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $msg')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate($msg));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -444,3 +436,4 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     );
   }
 }
+

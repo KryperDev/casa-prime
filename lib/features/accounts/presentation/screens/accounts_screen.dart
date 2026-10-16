@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
-import '../../../transactions/domain/account_model.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/data/transaction_service.dart';
@@ -22,9 +23,7 @@ class AccountsScreen extends StatelessWidget {
       stream: familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
 
@@ -34,7 +33,7 @@ class AccountsScreen extends StatelessWidget {
             stream: accountService.watchAccounts(family.id),
             builder: (context, accSnap) {
               if (accSnap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const ListSkeleton();
               }
               final accounts = accSnap.data ?? [];
 
@@ -48,25 +47,16 @@ class AccountsScreen extends StatelessWidget {
                   );
 
                   if (accounts.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.account_balance_wallet_outlined,
-                                size: 72, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text('Nenhuma conta cadastrada.',
-                                style: TextStyle(color: Colors.grey)),
-                            SizedBox(height: 8),
-                            Text(
-                              'Toque em + para adicionar a primeira conta.',
-                              style: TextStyle(
-                                  color: Colors.grey, fontSize: 12),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                    return EmptyState(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Nenhuma conta cadastrada',
+                      subtitle:
+                          'Cadastre suas contas para acompanhar o saldo de cada uma: dinheiro, conta corrente, poupança, cartão...',
+                      actionLabel: 'Adicionar conta',
+                      onAction: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EditAccountScreen(),
                         ),
                       ),
                     );
@@ -78,7 +68,6 @@ class AccountsScreen extends StatelessWidget {
                   return ListView(
                     padding: const EdgeInsets.only(bottom: 96),
                     children: [
-                      // Card de saldo total
                       Container(
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(20),
@@ -187,5 +176,3 @@ class _AccountTile extends StatelessWidget {
     );
   }
 }
-
-

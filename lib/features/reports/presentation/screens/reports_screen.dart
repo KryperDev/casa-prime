@@ -5,6 +5,7 @@ import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/data/transaction_service.dart';
 import '../../../transactions/domain/transaction_model.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import 'export_sheet.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -39,9 +40,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       stream: familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
 
@@ -748,3 +747,4 @@ class _YearlyBarChart extends StatelessWidget {
     );
   }
 }
+

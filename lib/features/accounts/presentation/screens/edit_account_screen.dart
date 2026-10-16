@@ -3,6 +3,8 @@ import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/domain/account_model.dart';
 import '../../data/account_service.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 import '../../data/account_types.dart';
 
 class EditAccountScreen extends StatefulWidget {
@@ -70,19 +72,13 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                isEditing ? 'Conta atualizada.' : 'Conta criada.')),
-      );
+      AppSnackBar.sucesso(context, isEditing ? 'Conta atualizada.' : 'Conta criada.');
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $msg')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate($msg));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -153,9 +149,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $msg')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate($msg));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -253,3 +247,4 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     );
   }
 }
+

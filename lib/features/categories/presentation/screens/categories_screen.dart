@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/utils/icon_helper.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/domain/category_model.dart';
@@ -18,9 +20,7 @@ class CategoriesScreen extends StatelessWidget {
       stream: familyService.watchMyFamily(),
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
         final family = famSnap.data!;
 
@@ -30,23 +30,27 @@ class CategoriesScreen extends StatelessWidget {
             stream: categoryService.watchCategories(family.id),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const ListSkeleton();
               }
               final all = snap.data ?? [];
               if (all.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('Nenhuma categoria criada.',
-                        style: TextStyle(color: Colors.grey)),
+                return EmptyState(
+                  icon: Icons.category_outlined,
+                  title: 'Nenhuma categoria criada',
+                  subtitle:
+                      'Crie categorias para organizar seus lançamentos por tipo: alimentação, moradia, transporte...',
+                  actionLabel: 'Nova categoria',
+                  onAction: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EditCategoryScreen(),
+                    ),
                   ),
                 );
               }
 
-              final incomes =
-                  all.where((c) => c.type == 'income').toList();
-              final expenses =
-                  all.where((c) => c.type == 'expense').toList();
+              final incomes = all.where((c) => c.type == 'income').toList();
+              final expenses = all.where((c) => c.type == 'expense').toList();
 
               return ListView(
                 padding: const EdgeInsets.only(bottom: 96),
