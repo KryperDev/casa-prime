@@ -4,6 +4,7 @@ import '../../../reports/presentation/screens/reports_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../transactions/presentation/screens/transactions_list_screen.dart';
 import '../../../goals/presentation/screens/goals_screen.dart';
+import '../../../recurring/presentation/screens/recurrings_screen.dart';
 import 'dashboard_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const _screens = [
     DashboardScreen(),
     TransactionsListScreen(),
+    RecurringsScreen(),
     GoalsScreen(),
     ReportsScreen(),
     ProfileScreen(),
@@ -44,6 +46,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.list_alt_outlined),
             selectedIcon: Icon(Icons.list_alt),
             label: 'Lançamentos',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.repeat_outlined),
+            selectedIcon: Icon(Icons.repeat),
+            label: 'Recorrentes',
           ),
           NavigationDestination(
             icon: Icon(Icons.savings_outlined),

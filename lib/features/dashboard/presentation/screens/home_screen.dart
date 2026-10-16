@@ -1,8 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../../auth/domain/user_model.dart';
+import '../../../family/data/family_service.dart';
 import '../../../family/presentation/screens/create_family_screen.dart';
 import '../../../family/presentation/screens/join_family_screen.dart';
+import '../../../recurring/data/recurring_service.dart';
 import 'main_navigation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,6 +32,30 @@ class _HomeScreenState extends State<HomeScreen> {
       _user = u;
       _loading = false;
     });
+
+    // Processa recorrências vencidas em background
+    if (u?.familyId != null) {
+      _processarRecorrencias(u!.familyId!);
+    }
+  }
+
+  Future<void> _processarRecorrencias(String familyId) async {
+    try {
+      final service = RecurringService();
+      final total = await service.processarVencidas(familyId);
+      if (total > 0 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$total lançamento(s) recorrente(s) criado(s).',
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (_) {
+      // silencioso
+    }
   }
 
   @override
