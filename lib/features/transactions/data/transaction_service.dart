@@ -26,6 +26,7 @@ class TransactionService {
     String? accountId,
     String? accountName,
     String? note,
+    String? goalId,
   }) async {
     final uid = _auth.currentUser!.uid;
     final user = await _auth.fetchCurrentUser();
@@ -53,6 +54,7 @@ class TransactionService {
       'accountId': accountId,
       'accountName': accountName,
       'note': note,
+      'goalId': goalId,
       'createdBy': uid,
       'createdByName': user?.displayName ?? 'Usuário',
       'createdAt': Timestamp.fromDate(now),
@@ -226,3 +228,4 @@ class TransactionService {
     });
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum TransactionType { income, expense }
 
@@ -12,17 +12,18 @@ class TransactionModel {
   final String categoryName;
   final String? subcategoryId;
   final String? subcategoryName;
-  final DateTime date;         // data do lançamento
-  final DateTime competenceDate; // data de competência (mês de referência)
+  final DateTime date;
+  final DateTime competenceDate;
   final String? paymentMethod;
   final String? accountId;
   final String? accountName;
   final String? note;
-  final String createdBy;      // uid
-  final String createdByName;  // nome de quem lançou
+  final String createdBy;
+  final String createdByName;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final String status;         // 'active' | 'deleted'
+  final String status; // 'active' | 'deleted'
+  final String? goalId; // vinculacao a uma meta (opcional)
 
   TransactionModel({
     required this.id,
@@ -45,6 +46,7 @@ class TransactionModel {
     required this.createdAt,
     required this.updatedAt,
     this.status = 'active',
+    this.goalId,
   });
 
   bool get isIncome => type == TransactionType.income;
@@ -71,6 +73,7 @@ class TransactionModel {
         'createdAt': Timestamp.fromDate(createdAt),
         'updatedAt': Timestamp.fromDate(updatedAt),
         'status': status,
+        'goalId': goalId,
       };
 
   factory TransactionModel.fromMap(Map<String, dynamic> map) => TransactionModel(
@@ -97,5 +100,6 @@ class TransactionModel {
         createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         status: map['status'] ?? 'active',
+        goalId: map['goalId'],
       );
 }

@@ -3,6 +3,7 @@ import '../../../family/presentation/screens/my_family_screen.dart';
 import '../../../reports/presentation/screens/reports_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../transactions/presentation/screens/transactions_list_screen.dart';
+import '../../../goals/presentation/screens/goals_screen.dart';
 import 'dashboard_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -18,8 +19,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const _screens = [
     DashboardScreen(),
     TransactionsListScreen(),
+    GoalsScreen(),
     ReportsScreen(),
-    MyFamilyScreen(),
     ProfileScreen(),
   ];
 
@@ -45,14 +46,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Lançamentos',
           ),
           NavigationDestination(
+            icon: Icon(Icons.savings_outlined),
+            selectedIcon: Icon(Icons.savings),
+            label: 'Metas',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
             label: 'Relatórios',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.family_restroom_outlined),
-            selectedIcon: Icon(Icons.family_restroom),
-            label: 'Família',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

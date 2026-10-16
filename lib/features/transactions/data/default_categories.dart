@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Cria categorias padrão para uma família recém-criada.
+/// Cria categorias padrÃ£o para uma famÃ­lia recÃ©m-criada.
 Future<void> seedDefaultCategories(String familyId) async {
   final db = FirebaseFirestore.instance;
   final col = db.collection('families').doc(familyId).collection('categories');
@@ -8,7 +8,7 @@ Future<void> seedDefaultCategories(String familyId) async {
   // ENTRADAS
   final incomeCategories = [
     {
-      'name': 'Salário',
+      'name': 'SalÃ¡rio',
       'icon': 'work',
       'subs': <Map<String, String>>[],
     },
@@ -18,7 +18,7 @@ Future<void> seedDefaultCategories(String familyId) async {
       'subs': <Map<String, String>>[],
     },
     {
-      'name': 'Benefício',
+      'name': 'BenefÃ­cio',
       'icon': 'card_giftcard',
       'subs': <Map<String, String>>[],
     },
@@ -39,10 +39,10 @@ Future<void> seedDefaultCategories(String familyId) async {
     },
   ];
 
-  // SAÍDAS
+  // SAÃDAS
   final expenseCategories = [
     {
-      'name': 'Alimentação',
+      'name': 'AlimentaÃ§Ã£o',
       'icon': 'restaurant',
       'subs': [
         {'id': 'mercado', 'name': 'Mercado'},
@@ -56,12 +56,12 @@ Future<void> seedDefaultCategories(String familyId) async {
       'icon': 'home',
       'subs': [
         {'id': 'aluguel', 'name': 'Aluguel'},
-        {'id': 'condominio', 'name': 'Condomínio'},
+        {'id': 'condominio', 'name': 'CondomÃ­nio'},
         {'id': 'reforma', 'name': 'Reforma'},
       ],
     },
     {
-      'name': 'Água',
+      'name': 'Ãgua',
       'icon': 'water_drop',
       'subs': <Map<String, String>>[],
     },
@@ -84,14 +84,14 @@ Future<void> seedDefaultCategories(String familyId) async {
       'name': 'Transporte',
       'icon': 'directions_car',
       'subs': [
-        {'id': 'combustivel', 'name': 'Combustível'},
+        {'id': 'combustivel', 'name': 'CombustÃ­vel'},
         {'id': 'uber', 'name': 'Uber/99'},
-        {'id': 'onibus', 'name': 'Ônibus/Metrô'},
+        {'id': 'onibus', 'name': 'Ã”nibus/MetrÃ´'},
         {'id': 'estacionamento', 'name': 'Estacionamento'},
       ],
     },
     {
-      'name': 'Educação',
+      'name': 'EducaÃ§Ã£o',
       'icon': 'school',
       'subs': [
         {'id': 'escola', 'name': 'Escola'},
@@ -101,11 +101,11 @@ Future<void> seedDefaultCategories(String familyId) async {
       ],
     },
     {
-      'name': 'Saúde',
+      'name': 'SaÃºde',
       'icon': 'local_hospital',
       'subs': [
-        {'id': 'plano', 'name': 'Plano de Saúde'},
-        {'id': 'farmacia', 'name': 'Farmácia'},
+        {'id': 'plano', 'name': 'Plano de SaÃºde'},
+        {'id': 'farmacia', 'name': 'FarmÃ¡cia'},
         {'id': 'consultas', 'name': 'Consultas'},
       ],
     },
@@ -124,23 +124,28 @@ Future<void> seedDefaultCategories(String familyId) async {
       'icon': 'shopping_bag',
       'subs': [
         {'id': 'roupas', 'name': 'Roupas'},
-        {'id': 'eletronicos', 'name': 'Eletrônicos'},
+        {'id': 'eletronicos', 'name': 'EletrÃ´nicos'},
         {'id': 'casa', 'name': 'Casa'},
       ],
     },
     {
-      'name': 'Cartão de Crédito',
+      'name': 'CartÃ£o de CrÃ©dito',
       'icon': 'credit_card',
       'subs': <Map<String, String>>[],
     },
     {
-      'name': 'Empréstimos',
+      'name': 'EmprÃ©stimos',
       'icon': 'request_quote',
       'subs': <Map<String, String>>[],
     },
     {
       'name': 'Assinaturas',
       'icon': 'subscriptions',
+      'subs': <Map<String, String>>[],
+    },
+    {
+      'name': 'Metas e Objetivos',
+      'icon': 'savings',
       'subs': <Map<String, String>>[],
     },
     {
