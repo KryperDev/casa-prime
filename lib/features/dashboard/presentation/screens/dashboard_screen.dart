@@ -8,6 +8,7 @@ import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../../transactions/data/transaction_service.dart';
 import '../../../transactions/domain/transaction_model.dart';
 import '../../../transactions/presentation/screens/transaction_details_screen.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -23,7 +24,7 @@ class DashboardScreen extends StatelessWidget {
       builder: (context, famSnap) {
         if (!famSnap.hasData) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: DashboardSkeleton(),
           );
         }
         final family = famSnap.data!;
@@ -40,7 +41,7 @@ class DashboardScreen extends StatelessWidget {
             stream: txService.watchTransactions(family.id),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const DashboardSkeleton();
               }
               final list = snap.data ?? [];
               final stats = _DashboardStats.from(list);
@@ -561,3 +562,4 @@ class _MiniTile extends StatelessWidget {
     );
   }
 }
+
