@@ -109,7 +109,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      AppSnackBar.erro(context, ErrorTranslator.translate($msg));
+      AppSnackBar.erro(context, ErrorTranslator.translate(msg));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -179,7 +179,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      AppSnackBar.erro(context, ErrorTranslator.translate($msg));
+      AppSnackBar.erro(context, ErrorTranslator.translate(msg));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -436,4 +436,5 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     );
   }
 }
+
 

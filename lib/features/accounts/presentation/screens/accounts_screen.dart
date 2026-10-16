@@ -4,6 +4,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/loading_skeleton.dart';
 import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
+import '../../../transactions/domain/account_model.dart';
 import '../../../transactions/data/transaction_service.dart';
 import '../../../transactions/domain/transaction_model.dart';
 import '../../data/account_service.dart';
@@ -176,3 +177,4 @@ class _AccountTile extends StatelessWidget {
     );
   }
 }
+
