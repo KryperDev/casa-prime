@@ -5,6 +5,7 @@ import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../transactions/presentation/screens/transactions_list_screen.dart';
 import '../../../goals/presentation/screens/goals_screen.dart';
 import '../../../recurring/presentation/screens/recurrings_screen.dart';
+import '../../../installments/presentation/screens/installments_screen.dart';
 import 'dashboard_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     DashboardScreen(),
     TransactionsListScreen(),
     RecurringsScreen(),
+    InstallmentsScreen(),
     GoalsScreen(),
     ReportsScreen(),
     ProfileScreen(),
@@ -45,12 +47,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           NavigationDestination(
             icon: Icon(Icons.list_alt_outlined),
             selectedIcon: Icon(Icons.list_alt),
-            label: 'Lançamentos',
+            label: 'Lançar',
           ),
           NavigationDestination(
             icon: Icon(Icons.repeat_outlined),
             selectedIcon: Icon(Icons.repeat),
-            label: 'Recorrentes',
+            label: 'Recorr.',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.credit_card_outlined),
+            selectedIcon: Icon(Icons.credit_card),
+            label: 'Parcel.',
           ),
           NavigationDestination(
             icon: Icon(Icons.savings_outlined),
@@ -60,7 +67,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
-            label: 'Relatórios',
+            label: 'Relat.',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

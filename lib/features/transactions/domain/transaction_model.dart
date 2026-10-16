@@ -22,8 +22,11 @@ class TransactionModel {
   final String createdByName;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final String status; // 'active' | 'deleted'
-  final String? goalId; // vinculacao a uma meta (opcional)
+  final String status;
+  final String? goalId;
+  final String? purchaseId;      // compra parcelada
+  final int? installmentNumber;  // 1, 2, 3...
+  final int? totalInstallments;  // 12, 24...
 
   TransactionModel({
     required this.id,
@@ -47,10 +50,14 @@ class TransactionModel {
     required this.updatedAt,
     this.status = 'active',
     this.goalId,
+    this.purchaseId,
+    this.installmentNumber,
+    this.totalInstallments,
   });
 
   bool get isIncome => type == TransactionType.income;
   bool get isExpense => type == TransactionType.expense;
+  bool get isInstallment => purchaseId != null;
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -74,6 +81,9 @@ class TransactionModel {
         'updatedAt': Timestamp.fromDate(updatedAt),
         'status': status,
         'goalId': goalId,
+        'purchaseId': purchaseId,
+        'installmentNumber': installmentNumber,
+        'totalInstallments': totalInstallments,
       };
 
   factory TransactionModel.fromMap(Map<String, dynamic> map) => TransactionModel(
@@ -101,5 +111,8 @@ class TransactionModel {
         updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         status: map['status'] ?? 'active',
         goalId: map['goalId'],
+        purchaseId: map['purchaseId'],
+        installmentNumber: map['installmentNumber'],
+        totalInstallments: map['totalInstallments'],
       );
 }

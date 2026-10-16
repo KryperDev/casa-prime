@@ -8,9 +8,6 @@ class TransactionService {
   final AuthService _auth = AuthService();
   final NotificationService _notif = NotificationService();
 
-  // ============================================================
-  //  CRIAR
-  // ============================================================
   Future<String> addTransaction({
     required String familyId,
     required TransactionType type,
@@ -27,6 +24,10 @@ class TransactionService {
     String? accountName,
     String? note,
     String? goalId,
+    String? purchaseId,
+    int? installmentNumber,
+    int? totalInstallments,
+    bool notify = true,
   }) async {
     final uid = _auth.currentUser!.uid;
     final user = await _auth.fetchCurrentUser();
@@ -54,12 +55,15 @@ class TransactionService {
       'accountId': accountId,
       'accountName': accountName,
       'note': note,
-      'goalId': goalId,
       'createdBy': uid,
       'createdByName': user?.displayName ?? 'Usuário',
       'createdAt': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
       'status': 'active',
+      'goalId': goalId,
+      'purchaseId': purchaseId,
+      'installmentNumber': installmentNumber,
+      'totalInstallments': totalInstallments,
     };
 
     await ref.set(tx);
@@ -72,28 +76,25 @@ class TransactionService {
       newValue: tx,
     );
 
-    // Notifica outros membros
-    try {
-      final members = await _notif.familyMemberIds(familyId);
-      await _notif.notifyUsers(
-        userIds: members,
-        type: 'transaction_added',
-        title: type == TransactionType.income
-            ? 'Nova entrada'
-            : 'Nova despesa',
-        body: '${user?.displayName ?? 'Alguém'} lançou '
-            '"$description" de R\$ ${amount.toStringAsFixed(2)}.',
-        data: {'familyId': familyId, 'transactionId': ref.id},
-        excludeUserId: uid,
-      );
-    } catch (_) {}
+    // Notifica outros membros apenas se for lançamento "normal"
+    if (notify && purchaseId == null) {
+      try {
+        final members = await _notif.familyMemberIds(familyId);
+        await _notif.notifyUsers(
+          userIds: members,
+          type: 'transaction_added',
+          title: type == TransactionType.income ? 'Nova entrada' : 'Nova despesa',
+          body: '${user?.displayName ?? 'Alguém'} lançou "$description" '
+              'de R\$ ${amount.toStringAsFixed(2)}.',
+          data: {'familyId': familyId, 'transactionId': ref.id},
+          excludeUserId: uid,
+        );
+      } catch (_) {}
+    }
 
     return ref.id;
   }
 
-  // ============================================================
-  //  ATUALIZAR
-  // ============================================================
   Future<void> updateTransaction({
     required String familyId,
     required TransactionModel old,
@@ -120,7 +121,6 @@ class TransactionService {
       newValue: after,
     );
 
-    // Notifica o autor original (se outro usuário editou) + admin
     try {
       final me = _auth.currentUser!.uid;
       final adminId = await _notif.familyAdminId(familyId);
@@ -139,9 +139,6 @@ class TransactionService {
     } catch (_) {}
   }
 
-  // ============================================================
-  //  EXCLUIR (soft delete)
-  // ============================================================
   Future<void> deleteTransaction({
     required String familyId,
     required TransactionModel tx,
@@ -165,7 +162,6 @@ class TransactionService {
       oldValue: tx.toMap(),
     );
 
-    // Notifica o autor original (se outro usuário excluiu)
     try {
       final me = _auth.currentUser!.uid;
       if (tx.createdBy != me) {
@@ -181,9 +177,6 @@ class TransactionService {
     } catch (_) {}
   }
 
-  // ============================================================
-  //  STREAM
-  // ============================================================
   Stream<List<TransactionModel>> watchTransactions(String familyId) {
     return _db
         .collection('families')
@@ -199,9 +192,6 @@ class TransactionService {
     });
   }
 
-  // ============================================================
-  //  AUDITORIA
-  // ============================================================
   Future<void> _logAction({
     required String familyId,
     required String action,
@@ -228,4 +218,3 @@ class TransactionService {
     });
   }
 }
-

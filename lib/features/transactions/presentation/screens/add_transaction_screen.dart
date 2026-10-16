@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../accounts/data/account_service.dart';
 import '../../../accounts/data/account_types.dart';
+import '../../../installments/data/installment_service.dart';
 import '../../data/transaction_service.dart';
 import '../../domain/account_model.dart';
 import '../../domain/category_model.dart';
@@ -31,6 +32,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _noteCtrl = TextEditingController();
   final _service = TransactionService();
   final _accountService = AccountService();
+  final _installmentService = InstallmentService();
 
   String? _categoryId;
   String? _subcategoryId;
@@ -39,6 +41,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   late DateTime _competence;
   String? _paymentMethod;
   bool _loading = false;
+  bool _isInstallment = false;
+  int _installmentCount = 2;
 
   bool get isEditing => widget.existing != null;
 
@@ -118,6 +122,43 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     try {
       final amount = double.parse(_amountCtrl.text.replaceAll(',', '.'));
 
+      // ============================================================
+      //  Compra parcelada (só na criação)
+      // ============================================================
+      if (_isInstallment && !isEditing) {
+        await _installmentService.createInstallmentPurchase(
+          familyId: widget.familyId,
+          description: _descCtrl.text.trim(),
+          totalAmount: amount,
+          totalInstallments: _installmentCount,
+          categoryId: category.id,
+          categoryName: category.name,
+          subcategoryId: subcategory?.id,
+          subcategoryName: subcategory?.name,
+          paymentMethod: _paymentMethod,
+          accountId: account?.id,
+          accountName: account?.name,
+          note: _noteCtrl.text.trim().isEmpty
+              ? null
+              : _noteCtrl.text.trim(),
+          startDate: _date,
+        );
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Compra parcelada em $_installmentCount vezes criada!',
+            ),
+          ),
+        );
+        Navigator.pop(context, true);
+        return;
+      }
+
+      // ============================================================
+      //  Fluxo normal
+      // ============================================================
       if (isEditing) {
         final old = widget.existing!;
         final updated = TransactionModel(
@@ -141,6 +182,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           createdAt: old.createdAt,
           updatedAt: DateTime.now(),
           status: old.status,
+          goalId: old.goalId,
+          purchaseId: old.purchaseId,
+          installmentNumber: old.installmentNumber,
+          totalInstallments: old.totalInstallments,
         );
 
         await _service.updateTransaction(
@@ -196,9 +241,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final isIncome = widget.type == TransactionType.income;
-    final color = isIncome
-        ? const Color(0xFF2E7D32)
-        : const Color(0xFFC62828);
+    final color =
+        isIncome ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
     final title = isEditing
         ? (isIncome ? 'Editar entrada' : 'Editar saída')
         : (isIncome ? 'Nova entrada' : 'Nova saída');
@@ -249,7 +293,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ? null
                 : categories.firstWhere((c) => c.id == _categoryId);
 
-            // Stream separado para contas (não bloqueia)
             return StreamBuilder<List<AccountModel>>(
               stream: _accountService.watchAccounts(widget.familyId),
               builder: (context, accSnap) {
@@ -267,9 +310,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           keyboardType:
                               const TextInputType.numberWithOptions(
                                   decimal: true),
-                          decoration: const InputDecoration(
-                            labelText: 'Valor (R\$)',
-                            prefixIcon: Icon(Icons.attach_money),
+                          decoration: InputDecoration(
+                            labelText: _isInstallment
+                                ? 'Valor total da compra (R\$)'
+                                : 'Valor (R\$)',
+                            prefixIcon: const Icon(Icons.attach_money),
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
@@ -338,13 +383,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ],
                         const SizedBox(height: 16),
 
-                        // NOVO: Conta
                         if (accounts.isNotEmpty)
                           DropdownButtonFormField<String>(
                             value: _accountId,
                             decoration: const InputDecoration(
                               labelText: 'Conta (opcional)',
-                              prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                              prefixIcon: Icon(
+                                  Icons.account_balance_wallet_outlined),
                             ),
                             items: [
                               const DropdownMenuItem<String>(
@@ -379,15 +424,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           trailing: const Icon(Icons.edit),
                           onTap: () => _pickDate(isCompetence: false),
                         ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.event_note),
-                          title: const Text('Competência'),
-                          subtitle: Text(Formatters.date(_competence)),
-                          trailing: const Icon(Icons.edit),
-                          onTap: () => _pickDate(isCompetence: true),
-                        ),
+
+                        if (!_isInstallment)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.event_note),
+                            title: const Text('Competência'),
+                            subtitle: Text(Formatters.date(_competence)),
+                            trailing: const Icon(Icons.edit),
+                            onTap: () => _pickDate(isCompetence: true),
+                          ),
                         const SizedBox(height: 8),
+
                         DropdownButtonFormField<String>(
                           value: _paymentMethod,
                           decoration: const InputDecoration(
@@ -404,15 +452,107 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               setState(() => _paymentMethod = v),
                         ),
                         const SizedBox(height: 16),
+
+                        // ============================================================
+                        //  PARCELAMENTO (só para saída e só na criação)
+                        // ============================================================
+                        if (!isIncome && !isEditing) ...[
+                          Card(
+                            color: _isInstallment
+                                ? color.withValues(alpha: 0.08)
+                                : null,
+                            child: Column(
+                              children: [
+                                CheckboxListTile(
+                                  value: _isInstallment,
+                                  onChanged: (v) => setState(() {
+                                    _isInstallment = v ?? false;
+                                    if (_isInstallment &&
+                                        _paymentMethod == null) {
+                                      _paymentMethod = 'Crédito';
+                                    }
+                                  }),
+                                  title: const Text(
+                                      'Compra parcelada no cartão'),
+                                  subtitle: const Text(
+                                    'Cria automaticamente N lançamentos mensais',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey),
+                                  ),
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                ),
+                                if (_isInstallment)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 0, 16, 16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Número de parcelas',
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey)),
+                                        const SizedBox(height: 8),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 6,
+                                          children: [
+                                            2, 3, 4, 5, 6, 7, 8, 10, 12, 18, 24
+                                          ]
+                                              .map((n) => ChoiceChip(
+                                                    label: Text('${n}x'),
+                                                    selected:
+                                                        _installmentCount == n,
+                                                    onSelected: (_) =>
+                                                        setState(
+                                                            () => _installmentCount =
+                                                                n),
+                                                  ))
+                                              .toList(),
+                                        ),
+                                        if (_amountCtrl.text.isNotEmpty) ...[
+                                          const SizedBox(height: 12),
+                                          Builder(
+                                            builder: (_) {
+                                              final total = double.tryParse(
+                                                      _amountCtrl.text
+                                                          .replaceAll(
+                                                              ',', '.')) ??
+                                                  0;
+                                              final parcela = total /
+                                                  _installmentCount;
+                                              return Text(
+                                                '$_installmentCount parcelas de '
+                                                '${Formatters.money(parcela)}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: color,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
                         TextFormField(
                           controller: _noteCtrl,
-                          maxLines: 3,
+                          maxLines: 2,
                           decoration: const InputDecoration(
                             labelText: 'Observação (opcional)',
                             prefixIcon: Icon(Icons.notes),
                           ),
                         ),
                         const SizedBox(height: 24),
+
                         SizedBox(
                           height: 52,
                           child: FilledButton(
@@ -429,11 +569,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                         strokeWidth: 2,
                                         color: Colors.white),
                                   )
-                                : Text(isEditing
-                                    ? 'Salvar alterações'
-                                    : (isIncome
-                                        ? 'Adicionar entrada'
-                                        : 'Adicionar saída')),
+                                : Text(
+                                    _isInstallment
+                                        ? 'Criar compra parcelada'
+                                        : isEditing
+                                            ? 'Salvar alterações'
+                                            : (isIncome
+                                                ? 'Adicionar entrada'
+                                                : 'Adicionar saída')),
                           ),
                         ),
                       ],
