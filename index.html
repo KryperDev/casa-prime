@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casa Prime - Finanças para toda a família</title>
+    
+    <!-- ADICIONE AQUI: Ícone da aba (Favicon) -->
+    <link rel="icon" type="image/png" href="docs/screenshots/favicon.png">
+    <link rel="apple-touch-icon" href="docs/screenshots/favicon.png">
+    <meta name="theme-color" content="#1E88E5">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    ...
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1E88E5;
+            --primary-dark: #1565C0;
+            --text-dark: #1A1A1A;
+            --text-light: #666666;
+            --bg-light: #F8F9FA;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* NAVBAR */
+        nav {
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .logo img { width: 32px; border-radius: 8px; }
+
+        /* HERO SECTION */
+        .hero {
+            text-align: center;
+            padding: 80px 20px 60px;
+            background: linear-gradient(180deg, #FFFFFF 0%, var(--bg-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            max-width: 800px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+        .hero h1 span { color: var(--primary); }
+        .hero p {
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+            color: var(--text-light);
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        /* BOTÕES */
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--primary);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(30, 136, 229, 0.3);
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover { transform: translateY(-3px); background-color: var(--primary-dark); box-shadow: 0 15px 25px rgba(30, 136, 229, 0.4); }
+        .cta-button svg { width: 20px; margin-right: 10px; fill: currentColor; }
+
+        /* IMAGENS DE FUNDO (TELA DO APP) */
+        .app-preview {
+            margin-top: 50px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            perspective: 1000px;
+            padding: 0 20px;
+        }
+        .app-preview img {
+            width: 220px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transition: transform 0.4s ease;
+        }
+        .app-preview img:nth-child(1) { transform: rotateY(15deg) translateY(20px); }
+        .app-preview img:nth-child(2) { transform: translateY(-10px); z-index: 10; }
+        .app-preview img:nth-child(3) { transform: rotateY(-15deg) translateY(20px); }
+        
+        .app-preview img:hover { transform: translateY(-15px) scale(1.05); z-index: 20; }
+
+        /* FEATURES GRID */
+        .features-section {
+            padding: 80px 5%;
+            background: white;
+        }
+        .section-title { text-align: center; margin-bottom: 60px; }
+        .section-title h2 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; }
+        .section-title p { color: var(--text-light); font-size: 1.1rem; }
+
+        .grid-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .feature-card {
+            background: var(--bg-light);
+            padding: 30px;
+            border-radius: 20px;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .icon-box { width: 50px; height: 50px; background: rgba(30, 136, 229, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; }
+        .feature-card h3 { font-size: 1.3rem; margin-bottom: 10px; font-weight: 600; }
+        .feature-card p { color: var(--text-light); font-size: 0.95rem; }
+
+        /* SEÇÃO DE IMAGENS DETALHADAS */
+        .gallery-section { padding: 80px 5%; text-align: center; background: var(--bg-light); }
+        .gallery-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 40px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .gallery-item { flex: 1; min-width: 250px; max-width: 280px; }
+        .gallery-item img { width: 100%; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .gallery-item p { font-weight: 600; color: var(--text-dark); }
+
+        /* FOOTER */
+        footer {
+            background: #0F172A;
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        footer .logo { color: white; justify-content: center; margin-bottom: 20px; font-size: 1.8rem; }
+        footer p { color: #94A3B8; font-size: 0.95rem; margin-bottom: 10px; }
+        footer strong { color: var(--primary); }
+        .badge { display: inline-block; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.85rem; margin-top: 20px; color: #CBD5E1; }
+
+        @media (max-width: 768px) {
+            .app-preview img:nth-child(1), .app-preview img:nth-child(3) { display: none; }
+            .app-preview img:nth-child(2) { transform: none; width: 260px; }
+            .hero { padding: 50px 20px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <img src="docs/screenshots/icon.png" alt="Casa Prime Logo" onerror="this.style.display='none'">
+            Casa Prime
+        </div>
+        <a href="https://github.com/SEU_USUARIO/casa-prime/releases/latest" style="text-decoration: none; color: var(--primary); font-weight: 600;">Baixar App</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>As finanças da sua família, <span>finalmente conectadas.</span></h1>
+        <p>Registre entradas e saídas, crie metas, gerencie compras parceladas e acompanhe os relatórios em tempo real com todos da casa.</p>
+        
+        <a href="https://github.com/SEU_USUARIO/casa-prime/releases/latest" class="cta-button">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H8l4-4 4 4h-3v4h-2z"/></svg>
+            Baixar APK Gratuito
+        </a>
+
+        <!-- 3 Prints lado a lado -->
+        <div class="app-preview">
+            <img src="docs/screenshots/lancamentos.png" alt="Lançamentos">
+            <img src="docs/screenshots/dashboard.png" alt="Dashboard">
+            <img src="docs/screenshots/metas.png" alt="Metas">
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section">
+        <div class="section-title">
+            <h2>Tudo o que sua família precisa</h2>
+            <p>Sem complicação, sem planilhas, sem papel.</p>
+        </div>
+        <div class="grid-features">
+            <div class="feature-card">
+                <div class="icon-box">👨‍👩‍👧‍👦</div>
+                <h3>Multiusuário</h3>
+                <p>Convide a família inteira. Todos lançam e visualizam, mas você controla as permissões.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box">💳</div>
+                <h3>Controle de Cartão</h3>
+                <p>Divida compras em até 24x e veja exatamente quanto vai pescar no orçamento de cada mês.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box">🔄</div>
+                <h3>Recorrências</h3>
+                <p>Salário, aluguel e Netflix. Cadastre uma vez e o app lança automaticamente todo mês.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box">🎯</div>
+                <h3>Metas Financeiras</h3>
+                <p>Quer viajar? Guarde dinheiro para a meta e acompanhe o progresso com todos.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box">📊</div>
+                <h3>Relatórios e Gráficos</h3>
+                <p>Descubra para onde o dinheiro está indo com gráficos interativos e fáceis de entender.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box">📤</div>
+                <h3>Exportação em PDF</h3>
+                <p>Baixe seus relatórios e compartilhe via WhatsApp ou guarde para o imposto de renda.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Galeria Completa -->
+    <section class="gallery-section">
+        <div class="section-title">
+            <h2>Interface simples e poderosa</h2>
+            <p>Conheça as telas do Casa Prime.</p>
+        </div>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <img src="docs/screenshots/relatorios.png" alt="Relatórios">
+                <p>Análise de Gastos</p>
+            </div>
+            <div class="gallery-item">
+                <img src="docs/screenshots/familia.png" alt="Família">
+                <p>Gestão de Membros</p>
+            </div>
+            <div class="gallery-item">
+                <img src="docs/screenshots/perfil.png" alt="Perfil">
+                <p>Seu Perfil Seguro</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="logo">Casa Prime</div>
+        <p>Gerenciamento financeiro familiar</p>
+        <p style="margin-top: 20px;">Criado com dedicação por <strong>Anderson Scantamburlo</strong></p>
+        <div class="badge">Versão 1.0.0 • Android 6.0+</div>
+    </footer>
+
+</body>
+</html>
