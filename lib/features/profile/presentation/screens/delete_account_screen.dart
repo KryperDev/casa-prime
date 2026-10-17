@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 import '../../../auth/data/auth_service.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
@@ -56,9 +58,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (!mounted) return;
       final s = e.toString();
       final msg = s.contains(']') ? s.split(']').last.trim() : s;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $msg')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate(msg));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -145,3 +145,4 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     );
   }
 }
+

@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 import '../../../../core/services/cloudinary_service.dart';
 import '../../../auth/data/auth_service.dart';
 
@@ -120,9 +122,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $e')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -214,3 +214,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
+

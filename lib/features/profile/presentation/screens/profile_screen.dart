@@ -8,6 +8,8 @@ import '../../../notifications/presentation/screens/notification_settings_screen
 import '../../../categories/presentation/screens/categories_screen.dart';
 import '../../../accounts/presentation/screens/accounts_screen.dart';
 import '../../../onboarding/presentation/screens/onboarding_screen.dart';
+import '../../../../app/routes.dart';
+import '../../../family/presentation/screens/my_family_screen.dart';
 import '../../../settings/presentation/screens/appearance_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_email_screen.dart';
@@ -141,6 +143,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 _actionTile(
+                  icon: Icons.people_outline,
+                  title: 'Minha Família',
+                  subtitle: 'Membros, convites e gestão',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MyFamilyScreen(),
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                _actionTile(
                   icon: Icons.person_outline,
                   title: 'Editar perfil',
                   subtitle: 'Nome e foto',
@@ -254,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const Divider(height: 1),
                 _infoTile(Icons.family_restroom, 'Família',
-                    _family?.name ?? '—'),
+                    _family?.name ?? '—', onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => const MyFamilyScreen())); }),
                 const Divider(height: 1),
                 _infoTile(Icons.calendar_today_outlined, 'Membro desde',
                     _formatDate(user.createdAt)),
@@ -268,8 +282,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           Card(
             child: ListTile(
-              leading:
-                  const Icon(Icons.delete_forever, color: Colors.red),
+              leading: const Icon(Icons.school_outlined),
+              title: const Text('Ver tutorial novamente'),
+              subtitle: const Text('Reveja as telas de boas-vindas'),
+              onTap: () async {
+                await OnboardingScreen.resetar();
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    AppRoutes.onboarding,
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
               title: const Text('Excluir minha conta',
                   style: TextStyle(color: Colors.red)),
               subtitle: const Text(
@@ -339,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _infoTile(IconData icon, String label, String value) {
+  Widget _infoTile(IconData icon, String label, String value, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon),
       title: Text(label,
@@ -347,6 +378,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       subtitle: Text(value,
           style: const TextStyle(
               fontSize: 15, fontWeight: FontWeight.w600)),
+      trailing: onTap != null ? const Icon(Icons.chevron_right) : null,
+      onTap: onTap,
     );
   }
 
@@ -390,5 +423,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 }
+
+
+
 
 

@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../data/transaction_service.dart';
@@ -8,8 +11,8 @@ import 'add_transaction_screen.dart';
 class TransactionDetailsScreen extends StatelessWidget {
   final TransactionModel tx;
   final String familyId;
-  /// Se `true`, o usuário atual é administrador da família
-  /// e pode editar/excluir qualquer lançamento.
+  /// Se `true`, o usuÃ¡rio atual Ã© administrador da famÃ­lia
+  /// e pode editar/excluir qualquer lanÃ§amento.
   final bool isAdmin;
 
   const TransactionDetailsScreen({
@@ -53,9 +56,9 @@ class TransactionDetailsScreen extends StatelessWidget {
                   final ok = await showDialog<bool>(
                     context: context,
                     builder: (_) => AlertDialog(
-                      title: const Text('Excluir lançamento'),
+                      title: const Text('Excluir lanÃ§amento'),
                       content: const Text(
-                          'Tem certeza que deseja excluir este lançamento?'),
+                          'Tem certeza que deseja excluir este lanÃ§amento?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -71,6 +74,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                     ),
                   );
                   if (ok == true) {
+                    HapticFeedback.heavyImpact();
                     await service.deleteTransaction(
                       familyId: familyId,
                       tx: tx,
@@ -78,7 +82,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Lançamento excluído.')),
+                            content: Text('LanÃ§amento excluÃ­do.')),
                       );
                       Navigator.pop(context);
                     }
@@ -140,25 +144,25 @@ class TransactionDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _row('Tipo', isIncome ? 'Entrada' : 'Saída'),
+          _row('Tipo', isIncome ? 'Entrada' : 'SaÃ­da'),
           _row('Categoria', tx.categoryName),
           if (tx.subcategoryName != null)
             _row('Subcategoria', tx.subcategoryName!),
           _row('Data', Formatters.date(tx.date)),
           _row('Hora', Formatters.time(tx.createdAt)),
-          _row('Competência', Formatters.date(tx.competenceDate)),
+          _row('CompetÃªncia', Formatters.date(tx.competenceDate)),
           if (tx.paymentMethod != null)
             _row('Forma de pagamento', tx.paymentMethod!),
           if (tx.accountName != null) _row('Conta', tx.accountName!),
           if (tx.note != null && tx.note!.isNotEmpty)
-            _row('Observação', tx.note!),
+            _row('ObservaÃ§Ã£o', tx.note!),
 
           const Divider(height: 32),
 
           _row('Adicionado por', tx.createdByName),
           _row('Em', Formatters.dateTime(tx.createdAt)),
           if (tx.updatedAt.difference(tx.createdAt).inSeconds.abs() > 1)
-            _row('Última alteração', Formatters.dateTime(tx.updatedAt)),
+            _row('Ãšltima alteraÃ§Ã£o', Formatters.dateTime(tx.updatedAt)),
         ],
       ),
     );
@@ -185,3 +189,4 @@ class TransactionDetailsScreen extends StatelessWidget {
     );
   }
 }
+

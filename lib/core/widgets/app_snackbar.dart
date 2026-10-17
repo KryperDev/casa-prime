@@ -25,7 +25,7 @@ class AppSnackBar {
     Color color,
     IconData icon,
   ) {
-    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -34,7 +34,7 @@ class AppSnackBar {
           borderRadius: BorderRadius.circular(12),
         ),
         margin: const EdgeInsets.all(12),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
         content: Row(
           children: [
             Icon(icon, color: Colors.white, size: 22),
@@ -55,3 +55,4 @@ class AppSnackBar {
     );
   }
 }
+

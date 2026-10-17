@@ -1,4 +1,7 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../accounts/data/account_service.dart';
@@ -126,6 +129,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       //  Compra parcelada (só na criação)
       // ============================================================
       if (_isInstallment && !isEditing) {
+        HapticFeedback.mediumImpact();
         await _installmentService.createInstallmentPurchase(
           familyId: widget.familyId,
           description: _descCtrl.text.trim(),
@@ -199,6 +203,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           const SnackBar(content: Text('Lançamento atualizado.')),
         );
       } else {
+        HapticFeedback.lightImpact();
         await _service.addTransaction(
           familyId: widget.familyId,
           type: widget.type,
@@ -230,9 +235,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $e')),
-      );
+      AppSnackBar.erro(context, ErrorTranslator.translate(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -591,3 +594,5 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 }
+
+

@@ -1,7 +1,11 @@
 ﻿import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../core/utils/error_translator.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../../transactions/presentation/screens/transactions_list_screen.dart';
+import '../../../../core/widgets/loading_skeleton.dart';
 import '../../data/family_service.dart';
 import '../../domain/family_model.dart';
 import '../../domain/invite_model.dart';
@@ -21,9 +25,7 @@ class MyFamilyScreen extends StatelessWidget {
       stream: service.watchMyFamily(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: ListSkeleton());
         }
 
         final family = snapshot.data;
@@ -466,6 +468,21 @@ class _InvitesSection extends StatelessWidget {
                                 },
                               ),
                               IconButton(
+                                icon: const Icon(Icons.share,
+                                    color: Colors.green),
+                                tooltip: 'Compartilhar convite',
+                                onPressed: () async {
+                                  final text = 'Olá! Você foi convidado a '
+                                      'entrar na família no app Casa Prime.\n\n'
+                                      'Código de convite: ${inv.token}\n\n'
+                                      'Baixe o app e use este código em '
+                                      '"Entrar com convite".';
+                                  await SharePlus.instance.share(
+                                    ShareParams(text: text),
+                                  );
+                                },
+                              ),
+                              IconButton(
                                 icon: const Icon(Icons.cancel_outlined),
                                 onPressed: () => service.revokeInvite(inv),
                               ),
@@ -520,3 +537,5 @@ class _InvitesSection extends StatelessWidget {
     );
   }
 }
+
+
