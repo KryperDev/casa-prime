@@ -15,11 +15,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Força o Java a compilar usando UTF-8
+        encoding = "UTF-8"
     }
 
     defaultConfig {
         applicationId = "com.anderson.scantamburlo.casa_prime"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -48,11 +50,16 @@ android {
     }
 }
 
-// Força o Kotlin a compilar com Java 17, igual ao Java
+// Força o Kotlin a compilar com Java 17
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+// Força todas as tarefas Java a usarem UTF-8 (resolve o problema dos acentos)
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
 }
 
 flutter {
