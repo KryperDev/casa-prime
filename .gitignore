@@ -58,3 +58,7 @@ node_modules/
 serviceAccountKey.json
 node_modules/
 package-lock.json
+
+# Pastas e arquivos que nao devem ser versionados
+casa-prime/
+index.txt
