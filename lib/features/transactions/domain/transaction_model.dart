@@ -1,4 +1,5 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../split/domain/split_model.dart';
 
 enum TransactionType { income, expense }
 
@@ -26,7 +27,8 @@ class TransactionModel {
   final String? goalId;
   final String? purchaseId;      // compra parcelada
   final int? installmentNumber;  // 1, 2, 3...
-  final int? totalInstallments;  // 12, 24...
+  final int? totalInstallments;
+  final List<SplitShare>? splitShares;  // 12, 24...
 
   TransactionModel({
     required this.id,
@@ -53,6 +55,7 @@ class TransactionModel {
     this.purchaseId,
     this.installmentNumber,
     this.totalInstallments,
+    this.splitShares,
   });
 
   bool get isIncome => type == TransactionType.income;
@@ -84,6 +87,7 @@ class TransactionModel {
         'purchaseId': purchaseId,
         'installmentNumber': installmentNumber,
         'totalInstallments': totalInstallments,
+        'splitShares': splitShares?.map((s) => s.toMap()).toList(),
       };
 
   factory TransactionModel.fromMap(Map<String, dynamic> map) => TransactionModel(
@@ -114,5 +118,9 @@ class TransactionModel {
         purchaseId: map['purchaseId'],
         installmentNumber: map['installmentNumber'],
         totalInstallments: map['totalInstallments'],
+        splitShares: (map['splitShares'] as List?)
+            ?.map((s) => SplitShare.fromMap(Map<String, dynamic>.from(s)))
+            .toList(),
       );
 }
+

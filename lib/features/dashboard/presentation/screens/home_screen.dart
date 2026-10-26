@@ -37,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Processa recorrências vencidas em background
     if (u?.familyId != null) {
       _processarRecorrencias(u!.familyId!);
+      // Migração automática: garante planType em famílias antigas
+      FamilyService().migrarPlanTypeSeNecessario(u.familyId!);
     }
   }
 
@@ -156,5 +158,6 @@ class _NoFamilyScreen extends StatelessWidget {
     );
   }
 }
+
 
 

@@ -2,6 +2,7 @@
 import '../../../features/auth/data/auth_service.dart';
 import '../../notifications/data/notification_service.dart';
 import '../domain/transaction_model.dart';
+import '../../split/domain/split_model.dart';
 
 class TransactionService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -28,6 +29,7 @@ class TransactionService {
     int? installmentNumber,
     int? totalInstallments,
     bool notify = true,
+    List<SplitShare>? splitShares,
   }) async {
     final uid = _auth.currentUser!.uid;
     final user = await _auth.fetchCurrentUser();
@@ -65,6 +67,11 @@ class TransactionService {
       'installmentNumber': installmentNumber,
       'totalInstallments': totalInstallments,
     };
+    if (splitShares != null && splitShares.isNotEmpty) {
+      tx['splitShares'] = splitShares.map((s) => s.toMap()).toList();
+    }
+    // fim
+
 
     await ref.set(tx);
 
@@ -218,3 +225,4 @@ class TransactionService {
     });
   }
 }
+

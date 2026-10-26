@@ -7,6 +7,7 @@ import '../../../family/domain/family_model.dart';
 import '../../../notifications/presentation/screens/notification_settings_screen.dart';
 import '../../../categories/presentation/screens/categories_screen.dart';
 import '../../../accounts/presentation/screens/accounts_screen.dart';
+import '../../../subscription/presentation/screens/subscription_screen.dart';
 import '../../../onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../../app/routes.dart';
 import '../../../family/presentation/screens/my_family_screen.dart';
@@ -207,6 +208,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const NotificationSettingsScreen(),
                     ),
                   ),
+                ),
+                const Divider(height: 1),
+                _actionTile(
+                  icon: Icons.workspace_premium,
+                  title: 'Meu Plano',
+                  subtitle: _family?.planType.label ?? 'Grátis',
+                  onTap: () {
+                    if (_family == null) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SubscriptionScreen(family: _family!),
+                      ),
+                    );
+                  },
                 ),
                 const Divider(height: 1),
                 _actionTile(
@@ -423,6 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 }
+
 
 
 

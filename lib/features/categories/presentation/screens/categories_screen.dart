@@ -6,6 +6,7 @@ import '../../../family/data/family_service.dart';
 import '../../../family/domain/family_model.dart';
 import '../../../transactions/domain/category_model.dart';
 import '../../data/category_service.dart';
+import '../../../subscription/presentation/screens/subscription_screen.dart';
 import 'edit_category_screen.dart';
 
 class CategoriesScreen extends StatelessWidget {
@@ -61,10 +62,7 @@ class CategoriesScreen extends StatelessWidget {
                       icon: Icons.arrow_downward,
                       color: Color(0xFF2E7D32),
                     ),
-                    ...incomes.map((c) => _CategoryTile(
-                          category: c,
-                          familyId: family.id,
-                        )),
+                    ...incomes.map((c) => _CategoryTile(category: c, familyId: family.id, family: family)),
                   ],
                   if (expenses.isNotEmpty) ...[
                     const _SectionHeader(
@@ -72,10 +70,7 @@ class CategoriesScreen extends StatelessWidget {
                       icon: Icons.arrow_upward,
                       color: Color(0xFFC62828),
                     ),
-                    ...expenses.map((c) => _CategoryTile(
-                          category: c,
-                          familyId: family.id,
-                        )),
+                    ...expenses.map((c) => _CategoryTile(category: c, familyId: family.id, family: family)),
                   ],
                 ],
               );
@@ -84,12 +79,18 @@ class CategoriesScreen extends StatelessWidget {
           floatingActionButton: FloatingActionButton.extended(
             icon: const Icon(Icons.add),
             label: const Text('Nova categoria'),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const EditCategoryScreen(),
-              ),
-            ),
+            onPressed: () {
+              if (!family.canEditCategories) {
+                _showUpgradeDialog(context, family);
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EditCategoryScreen(),
+                ),
+              );
+            },
           ),
         );
       },
@@ -133,10 +134,11 @@ class _SectionHeader extends StatelessWidget {
 class _CategoryTile extends StatelessWidget {
   final CategoryModel category;
   final String familyId;
-
+  final FamilyModel family;
   const _CategoryTile({
     required this.category,
     required this.familyId,
+    required this.family,
   });
 
   @override
@@ -162,13 +164,36 @@ class _CategoryTile extends StatelessWidget {
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => EditCategoryScreen(existing: category),
-          ),
-        ),
+        onTap: () {
+          if (!family.canEditCategories) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                    'Categorias padrão não podem ser editadas no plano Grátis.'),
+                backgroundColor: Colors.orange,
+                action: SnackBarAction(
+                  label: 'Ver planos',
+                  textColor: Colors.white,
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SubscriptionScreen(family: family),
+                    ),
+                  ),
+                ),
+              ),
+            );
+            return;
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EditCategoryScreen(existing: category),
+            ),
+          );
+        },
       ),
     );
   }
 }
+

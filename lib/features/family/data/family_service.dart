@@ -265,6 +265,32 @@ class FamilyService {
     });
   }
 
+  // ============================================================
+  //  ATUALIZAR PLANO (chamado manualmente ou por webhook do MP)
+  // ============================================================
+  Future<void> upgradePlan({
+    required String familyId,
+    required PlanType newPlan,
+  }) async {
+    await _db.collection('families').doc(familyId).update({
+      'planType': newPlan.key,
+    });
+  }
+
+  // ============================================================
+  //  MIGRAÇÃO: garante que famílias antigas tenham planType
+  //  (chamado no login — só roda uma vez por família)
+  // ============================================================
+  Future<void> migrarPlanTypeSeNecessario(String familyId) async {
+    final doc = await _db.collection('families').doc(familyId).get();
+    final data = doc.data();
+    if (data != null && data['planType'] == null) {
+      // Famílias antigas ganham "family" como cortesia
+      await _db.collection('families').doc(familyId).update({
+        'planType': 'family',
+      });
+    }
+  }
   String _generateToken(int length) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rnd = Random.secure();
@@ -272,3 +298,4 @@ class FamilyService {
         .join();
   }
 }
+

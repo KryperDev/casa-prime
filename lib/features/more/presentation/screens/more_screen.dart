@@ -2,6 +2,7 @@
 import '../../../goals/presentation/screens/goals_screen.dart';
 import '../../../installments/presentation/screens/installments_screen.dart';
 import '../../../recurring/presentation/screens/recurrings_screen.dart';
+import '../../../split/presentation/screens/split_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -18,6 +19,19 @@ class MoreScreen extends StatelessWidget {
             child: Text(
               'Mais ferramentas para organizar sua vida financeira',
               style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ),
+          _tile(
+            context,
+            icon: Icons.handshake,
+            color: const Color(0xFFFF7043),
+            title: 'Acerto de contas',
+            subtitle: 'Quem deve quanto a quem (Plus)',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SplitScreen(),
+              ),
             ),
           ),
           _tile(
@@ -89,3 +103,4 @@ class MoreScreen extends StatelessWidget {
     );
   }
 }
+
