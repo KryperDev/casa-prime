@@ -14,14 +14,12 @@ class SubscriptionScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Cabeçalho
           const Padding(
             padding: EdgeInsets.only(bottom: 20),
             child: Text(
               'Escolha o plano ideal para a sua família',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
 
@@ -64,10 +62,10 @@ class SubscriptionScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Plano FAMÍLIA
+          // Plano FAMÍLIA (AGORA R$ 9,90)
           _PlanCard(
             title: 'Família',
-            price: 'R\$ 19,90',
+            price: 'R\$ 9,90',
             period: 'por mês',
             features: const [
               '✓ Até 5 membros',
@@ -85,10 +83,10 @@ class SubscriptionScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Plano PLUS
+          // Plano PLUS (AGORA R$ 19,90)
           _PlanCard(
             title: 'Família Plus',
-            price: 'R\$ 29,90',
+            price: 'R\$ 19,90',
             period: 'por mês',
             features: const [
               '✓ Até 10 membros',
@@ -106,14 +104,13 @@ class SubscriptionScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Aviso sobre pagamento
+          // Aviso
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: Colors.orange.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
             ),
             child: const Row(
               children: [
@@ -227,8 +224,7 @@ class _PlanCard extends StatelessWidget {
             if (isPopular)
               Container(
                 alignment: Alignment.center,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   color: primary,
@@ -245,8 +241,7 @@ class _PlanCard extends StatelessWidget {
               ),
             Text(
               title,
-              style: const TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
@@ -263,8 +258,7 @@ class _PlanCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(period,
-                      style: const TextStyle(
-                          fontSize: 13, color: Colors.grey)),
+                      style: const TextStyle(fontSize: 13, color: Colors.grey)),
                 ),
               ],
             ),
