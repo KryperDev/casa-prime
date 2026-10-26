@@ -1,170 +1,4 @@
-﻿import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../auth/data/auth_service.dart';
-import '../../notifications/data/notification_service.dart';
-import '../../transactions/data/default_categories.dart';
-import '../domain/family_model.dart';
-import '../domain/invite_model.dart';
-
-class FamilyService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final AuthService _auth = AuthService();
-  final NotificationService _notif = NotificationService();
-
-  // ============================================================
-  //  CRIAR FAMÍLIA
-  // ============================================================
-  Future<String> createFamily({required String name}) async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('Usuário não autenticado.');
-
-    final familyId = await _db.runTransaction<String>((tx) async {
-      final userRef = _db.collection('users').doc(user.uid);
-      final userSnap = await tx.get(userRef);
-      final userData = userSnap.data() ?? {};
-      if (userData['familyId'] != null) {
-        throw Exception('Você já pertence a uma família.');
-      }
-
-      final familyRef = _db.collection('families').doc();
-      final family = FamilyModel(
-        id: familyRef.id,
-        name: name.trim(),
-        adminId: user.uid,
-        memberIds: [user.uid],
-        createdAt: DateTime.now(),
-      );
-
-      tx.set(familyRef, family.toMap());
-      tx.update(userRef, {
-        'familyId': familyRef.id,
-        'role': 'admin',
-      });
-
-      return familyRef.id;
-    });
-
-    await seedDefaultCategories(familyId);
-    return familyId;
-  }
-
-  // ============================================================
-  //  OBSERVAR FAMÍLIA
-  // ============================================================
-  Stream<FamilyModel?> watchMyFamily() async* {
-    final user = _auth.currentUser;
-    if (user == null) {
-      yield null;
-      return;
-    }
-    await for (final userSnap
-        in _db.collection('users').doc(user.uid).snapshots()) {
-      final familyId = userSnap.data()?['familyId'] as String?;
-      if (familyId == null) {
-        yield null;
-      } else {
-        final familyDoc = await _db.collection('families').doc(familyId).get();
-        yield familyDoc.exists
-            ? FamilyModel.fromMap(familyDoc.data()!)
-            : null;
-      }
-    }
-  }
-
-  Future<FamilyModel?> fetchMyFamily() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
-    final userDoc = await _db.collection('users').doc(user.uid).get();
-    final familyId = userDoc.data()?['familyId'] as String?;
-    if (familyId == null) return null;
-    final familyDoc = await _db.collection('families').doc(familyId).get();
-    if (!familyDoc.exists) return null;
-    return FamilyModel.fromMap(familyDoc.data()!);
-  }
-
-  Future<List<Map<String, dynamic>>> fetchMembers(
-      List<String> memberIds) async {
-    if (memberIds.isEmpty) return [];
-    final result = <Map<String, dynamic>>[];
-    for (var i = 0; i < memberIds.length; i += 10) {
-      final chunk = memberIds.sublist(
-        i,
-        i + 10 > memberIds.length ? memberIds.length : i + 10,
-      );
-      final snap = await _db
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
-      for (final d in snap.docs) {
-        result.add({'uid': d.id, ...d.data()});
-      }
-    }
-    return result;
-  }
-
-  // ============================================================
-  //  CONVITES
-  // ============================================================
-  Future<InviteModel> createInvite({
-    required String familyId,
-    Duration validFor = const Duration(days: 7),
-  }) async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('Usuário não autenticado.');
-
-    final token = _generateToken(8);
-    final inviteRef =
-        _db.collection('families').doc(familyId).collection('invites').doc();
-
-    final invite = InviteModel(
-      id: inviteRef.id,
-      token: token,
-      familyId: familyId,
-      createdBy: user.uid,
-      createdAt: DateTime.now(),
-      expiresAt: DateTime.now().add(validFor),
-    );
-
-    await inviteRef.set(invite.toMap());
-
-    await _db.collection('invite_tokens').doc(token).set({
-      'familyId': familyId,
-      'inviteId': inviteRef.id,
-      'active': true,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    return invite;
-  }
-
-  Future<void> revokeInvite(InviteModel invite) async {
-    await _db
-        .collection('families')
-        .doc(invite.familyId)
-        .collection('invites')
-        .doc(invite.id)
-        .update({'revoked': true});
-    await _db.collection('invite_tokens').doc(invite.token).update({
-      'active': false,
-    });
-  }
-
-  Stream<List<InviteModel>> watchInvites(String familyId) {
-    return _db
-        .collection('families')
-        .doc(familyId)
-        .collection('invites')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => InviteModel.fromMap(d.id, d.data()))
-            .toList());
-  }
-
-  // ============================================================
-  //  ENTRAR COM CONVITE  ← dispara notificação ao admin
-  // ============================================================
-  Future<String> joinWithToken(String token) async {
+﻿  Future<String> joinWithToken(String token) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('Usuário não autenticado.');
 
@@ -185,6 +19,23 @@ class FamilyService {
         throw Exception('Você já pertence a uma família.');
       }
 
+      // ============================================================
+      //  NOVO: Verifica o limite de membros do plano
+      // ============================================================
+      final familyRef = _db.collection('families').doc(familyId);
+      final familySnap = await tx.get(familyRef);
+      final familyData = familySnap.data() ?? {};
+      final family = FamilyModel.fromMap(familyData);
+
+      final memberCount = (familyData['memberIds'] as List?)?.length ?? 0;
+      if (memberCount >= family.maxMembers) {
+        throw Exception(
+          'Esta família já atingiu o limite de ${family.maxMembers} membros '
+          'do plano ${family.planType.label}. '
+          'O administrador precisa fazer upgrade para adicionar mais membros.',
+        );
+      }
+
       final inviteRef = _db
           .collection('families')
           .doc(familyId)
@@ -200,7 +51,7 @@ class FamilyService {
       }
 
       tx.update(userRef, {'familyId': familyId, 'role': 'member'});
-      tx.update(_db.collection('families').doc(familyId), {
+      tx.update(familyRef, {
         'memberIds': FieldValue.arrayUnion([user.uid]),
       });
       tx.update(inviteRef, {'usageCount': FieldValue.increment(1)});
@@ -223,79 +74,7 @@ class FamilyService {
           excludeUserId: user.uid,
         );
       }
-    } catch (_) {
-      // não bloqueia o fluxo principal
-    }
+    } catch (_) {}
 
     return familyId;
   }
-
-  // ============================================================
-  //  ADMIN: parentesco, remoção, renomear
-  // ============================================================
-  Future<void> updateMemberRelationship({
-    required String memberId,
-    required String relationship,
-    String? customRelationship,
-  }) async {
-    await _db.collection('users').doc(memberId).update({
-      'relationship': relationship,
-      'customRelationship': customRelationship,
-    });
-  }
-
-  Future<void> removeMember({
-    required String familyId,
-    required String memberId,
-  }) async {
-    await _db.runTransaction((tx) async {
-      tx.update(_db.collection('users').doc(memberId), {
-        'familyId': null,
-        'role': 'member',
-      });
-      tx.update(_db.collection('families').doc(familyId), {
-        'memberIds': FieldValue.arrayRemove([memberId]),
-      });
-    });
-  }
-
-  Future<void> renameFamily(String familyId, String newName) async {
-    await _db.collection('families').doc(familyId).update({
-      'name': newName.trim(),
-    });
-  }
-
-  // ============================================================
-  //  ATUALIZAR PLANO (chamado manualmente ou por webhook do MP)
-  // ============================================================
-  Future<void> upgradePlan({
-    required String familyId,
-    required PlanType newPlan,
-  }) async {
-    await _db.collection('families').doc(familyId).update({
-      'planType': newPlan.key,
-    });
-  }
-
-  // ============================================================
-  //  MIGRAÇÃO: garante que famílias antigas tenham planType
-  //  (chamado no login — só roda uma vez por família)
-  // ============================================================
-  Future<void> migrarPlanTypeSeNecessario(String familyId) async {
-    final doc = await _db.collection('families').doc(familyId).get();
-    final data = doc.data();
-    if (data != null && data['planType'] == null) {
-      // Famílias antigas ganham "family" como cortesia
-      await _db.collection('families').doc(familyId).update({
-        'planType': 'family',
-      });
-    }
-  }
-  String _generateToken(int length) {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final rnd = Random.secure();
-    return List.generate(length, (_) => chars[rnd.nextInt(chars.length)])
-        .join();
-  }
-}
-

@@ -1,11 +1,10 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../../../core/widgets/app_snackbar.dart';
-import '../../../../core/utils/error_translator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../accounts/data/account_service.dart';
 import '../../../accounts/data/account_types.dart';
+import '../../../family/data/family_service.dart';
+import '../../../family/domain/family_model.dart';
 import '../../../installments/data/installment_service.dart';
 import '../../data/transaction_service.dart';
 import '../../domain/account_model.dart';
@@ -46,6 +45,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _loading = false;
   bool _isInstallment = false;
   int _installmentCount = 2;
+  FamilyModel? _family;
 
   bool get isEditing => widget.existing != null;
 
@@ -72,6 +72,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _date = DateTime.now();
       _competence = DateTime.now();
     }
+    _loadFamily();
+  }
+
+  Future<void> _loadFamily() async {
+    final f = await FamilyService().fetchMyFamily();
+    if (!mounted) return;
+    setState(() => _family = f);
   }
 
   @override
@@ -125,11 +132,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     try {
       final amount = double.parse(_amountCtrl.text.replaceAll(',', '.'));
 
-      // ============================================================
-      //  Compra parcelada (só na criação)
-      // ============================================================
+      // Compra parcelada
       if (_isInstallment && !isEditing) {
-        HapticFeedback.mediumImpact();
         await _installmentService.createInstallmentPurchase(
           familyId: widget.familyId,
           description: _descCtrl.text.trim(),
@@ -160,9 +164,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         return;
       }
 
-      // ============================================================
-      //  Fluxo normal
-      // ============================================================
+      // Fluxo normal
       if (isEditing) {
         final old = widget.existing!;
         final updated = TransactionModel(
@@ -203,7 +205,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           const SnackBar(content: Text('Lançamento atualizado.')),
         );
       } else {
-        HapticFeedback.lightImpact();
         await _service.addTransaction(
           familyId: widget.familyId,
           type: widget.type,
@@ -235,7 +236,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.erro(context, ErrorTranslator.translate(e));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: $e')),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -301,6 +304,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               builder: (context, accSnap) {
                 final accounts = accSnap.data ?? [];
 
+                // Trava de parcelas baseada no plano
+                final maxInstallments =
+                    _family?.planType == PlanType.free ? 12 : 24;
+                final opcoesParcelas = [
+                  2, 3, 4, 5, 6, 7, 8, 10, 12, 18, 24
+                ].where((n) => n <= maxInstallments).toList();
+
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Form(
@@ -330,6 +340,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             }
                             return null;
                           },
+                          onChanged: (_) => setState(() {}),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -456,9 +467,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // ============================================================
-                        //  PARCELAMENTO (só para saída e só na criação)
-                        // ============================================================
                         if (!isIncome && !isEditing) ...[
                           Card(
                             color: _isInstallment
@@ -493,24 +501,46 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Número de parcelas',
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey)),
+                                        Row(
+                                          children: [
+                                            const Text('Número de parcelas',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.grey)),
+                                            const Spacer(),
+                                            if (_family?.planType ==
+                                                PlanType.free)
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.orange
+                                                      .withValues(alpha: 0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: const Text(
+                                                    'Máx. 12x (Grátis)',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.orange)),
+                                              ),
+                                          ],
+                                        ),
                                         const SizedBox(height: 8),
                                         Wrap(
                                           spacing: 6,
                                           runSpacing: 6,
-                                          children: [
-                                            2, 3, 4, 5, 6, 7, 8, 10, 12, 18, 24
-                                          ]
+                                          children: opcoesParcelas
                                               .map((n) => ChoiceChip(
                                                     label: Text('${n}x'),
                                                     selected:
                                                         _installmentCount == n,
                                                     onSelected: (_) =>
-                                                        setState(
-                                                            () => _installmentCount =
+                                                        setState(() =>
+                                                            _installmentCount =
                                                                 n),
                                                   ))
                                               .toList(),
@@ -594,5 +624,3 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 }
-
-
